@@ -38,10 +38,9 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
       <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
         <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
           <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
-          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
         </div>
       </div>
     </div>
@@ -177,10 +176,9 @@ export const generateInvoicePDF = async (student: any) => {
       <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
         <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
           <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
-          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
         </div>
       </div>
     </div>
@@ -325,10 +323,9 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
       <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
         <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
           <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
-          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
         </div>
       </div>
     </div>

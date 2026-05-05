@@ -78,6 +78,10 @@ const studentSchema = z.object({
   // FINANCIALS
   registrationFee: z.coerce.number().min(0).default(0),
   tuitionFee: z.coerce.number().min(0).default(0),
+  uniformFee: z.coerce.number().min(0).default(0),
+  sewingKitsFee: z.coerce.number().min(0).default(0),
+  machineMaintenanceFee: z.coerce.number().min(0).default(0),
+  admissionFormFee: z.coerce.number().min(0).default(0),
   paymentPlan: z.enum(['Full Payment', 'Installments']).optional(),
   firstPaymentDate: z.string().optional(),
   secondPaymentDate: z.string().optional(),
@@ -88,6 +92,8 @@ const studentSchema = z.object({
   // MATERIALS
   hasStarterKit: z.enum(['Yes', 'No']).optional(),
   toolsIssued: z.array(z.string()).default([]),
+  starterKitFrenchCurves: z.boolean().default(false),
+  starterKitSewingKits: z.boolean().default(false),
 
   // HEALTH
   hasMedicalCondition: z.enum(['Yes', 'No']).optional(),
@@ -169,6 +175,10 @@ export function Students() {
       enrollmentDate: format(new Date(), 'yyyy-MM-dd'), 
       registrationFee: 0,
       tuitionFee: 0,
+      uniformFee: 500,
+      sewingKitsFee: 250,
+      machineMaintenanceFee: 400,
+      admissionFormFee: 0,
       tuitionTotal: 0,
       amountPaid: 0,
       gender: 'Female',
@@ -177,6 +187,8 @@ export function Students() {
       paymentPlan: 'Installments',
       mode: 'Full-Time',
       hasStarterKit: 'No',
+      starterKitFrenchCurves: false,
+      starterKitSewingKits: false,
       hasMedicalCondition: 'No',
       declarationConfirmed: false,
       toolsIssued: []
@@ -186,6 +198,10 @@ export function Students() {
   const watchDOB = watch('dob');
   const watchTuitionFee = watch('tuitionFee', 0);
   const watchRegFee = watch('registrationFee', 0);
+  const watchUniformFee = watch('uniformFee', 0);
+  const watchSewingKitsFee = watch('sewingKitsFee', 0);
+  const watchMaintenanceFee = watch('machineMaintenanceFee', 0);
+  const watchAdmissionFee = watch('admissionFormFee', 0);
   const watchPaid = watch('amountPaid', 0);
   const watchCourse = watch('course');
   const watchSurname = watch('surname', '');
@@ -212,7 +228,13 @@ export function Students() {
     }
   }, [watchDOB, setValue]);
 
-  const tuitionTotalCalculated = (Number(watchTuitionFee) || 0) + (Number(watchRegFee) || 0);
+  const tuitionTotalCalculated = 
+    (Number(watchTuitionFee) || 0) + 
+    (Number(watchRegFee) || 0) + 
+    (Number(watchUniformFee) || 0) + 
+    (Number(watchSewingKitsFee) || 0) + 
+    (Number(watchMaintenanceFee) || 0) + 
+    (Number(watchAdmissionFee) || 0);
   const calculatedBalance = Math.max(0, tuitionTotalCalculated - (Number(watchPaid) || 0));
 
   useEffect(() => {
@@ -476,7 +498,13 @@ export function Students() {
         amountPaid: 0,
         registrationFee: 0,
         tuitionFee: 0,
+        uniformFee: 500,
+        sewingKitsFee: 250,
+        machineMaintenanceFee: 400,
+        admissionFormFee: 0,
         hasStarterKit: 'No',
+        starterKitFrenchCurves: false,
+        starterKitSewingKits: false,
         hasMedicalCondition: 'No',
         declarationConfirmed: false,
         toolsIssued: []
@@ -1320,6 +1348,37 @@ export function Students() {
                           </div>
                         </div>
                         <div className="space-y-2">
+                          <label className="field-label">Uniform</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
+                            <input type="number" {...register('uniformFee')} className="input-field pl-12 bg-bg-black" placeholder="500" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="field-label">Sewing Kits</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
+                            <input type="number" {...register('sewingKitsFee')} className="input-field pl-12 bg-bg-black" placeholder="250" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
+                        <div className="space-y-2">
+                          <label className="field-label">Machine Maintenance (6m)</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
+                            <input type="number" {...register('machineMaintenanceFee')} className="input-field pl-12 bg-bg-black" placeholder="400" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="field-label">Admission Form</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
+                            <input type="number" {...register('admissionFormFee')} className="input-field pl-12 bg-bg-black" placeholder="200" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
                           <label className="field-label">Total Expected</label>
                           <div className="h-[46px] flex items-center px-4 bg-primary/5 rounded-lg border border-primary/20 font-black text-primary text-lg">
                             GH₵ {tuitionTotalCalculated.toLocaleString()}
@@ -1421,17 +1480,53 @@ export function Students() {
                          <div className="space-y-4">
                             <h5 className="text-[10px] font-black text-text-gray uppercase tracking-widest border-b border-white/10 pb-2">Starter Kit Allocation</h5>
                             <div className="space-y-4">
-                               <div className="flex items-center gap-4">
-                                  <label className="field-label">Starter Kit Issued?</label>
-                                  {['Yes', 'No'].map(val => (
-                                    <label key={val} className="flex items-center gap-2 cursor-pointer">
-                                      <input type="radio" value={val} {...register('hasStarterKit')} className="w-4 h-4 accent-primary" />
-                                      <span className="text-xs font-bold text-text-gray">{val}</span>
-                                    </label>
-                                  ))}
+                               <div className="grid grid-cols-2 gap-4 bg-black/40 p-4 rounded-xl border border-white/5">
+                                 <div>
+                                   <p className="text-[9px] text-text-gray uppercase font-bold">Uniform</p>
+                                   <p className="text-xs font-black">GH₵ 500.00</p>
+                                 </div>
+                                 <div>
+                                   <p className="text-[9px] text-text-gray uppercase font-bold">Sewing kits</p>
+                                   <p className="text-xs font-black">GH₵ 250.00</p>
+                                 </div>
+                                 <div>
+                                   <p className="text-[9px] text-text-gray uppercase font-bold">Machine maintenance</p>
+                                   <p className="text-[10px] font-black">GH₵ 400 (6 months)</p>
+                                 </div>
+                                 <div>
+                                   <p className="text-[9px] text-text-gray uppercase font-bold">Admission form</p>
+                                   <p className="text-xs font-black">GH₵ 200.00</p>
+                                 </div>
                                </div>
+
+                               <div className="flex items-center gap-4">
+                                  <label className="field-label font-black text-white">Issue Kit?</label>
+                                  <div className="flex gap-4">
+                                    {['Yes', 'No'].map(val => (
+                                      <label key={val} className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" value={val} {...register('hasStarterKit')} className="w-4 h-4 accent-primary" />
+                                        <span className="text-xs font-bold text-text-gray">{val}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                               </div>
+
                                <div className="space-y-2">
-                                  <label className="field-label">Tools Handed Over</label>
+                                  <label className="field-label">Items Allocated</label>
+                                  <div className="grid grid-cols-2 gap-4 p-4 bg-black/40 rounded-xl border border-white/5">
+                                    <label className="flex items-center gap-3 group cursor-pointer">
+                                      <input type="checkbox" {...register('starterKitFrenchCurves')} className="w-5 h-5 accent-primary rounded cursor-pointer" />
+                                      <span className="text-[10px] font-black text-text-gray group-hover:text-primary transition-colors uppercase">French Curves</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 group cursor-pointer">
+                                      <input type="checkbox" {...register('starterKitSewingKits')} className="w-5 h-5 accent-primary rounded cursor-pointer" />
+                                      <span className="text-[10px] font-black text-text-gray group-hover:text-primary transition-colors uppercase">Sewing Kits</span>
+                                    </label>
+                                  </div>
+                               </div>
+
+                               <div className="space-y-2">
+                                  <label className="field-label">Tools Handed Over (Optional)</label>
                                   <div className="grid grid-cols-2 gap-2 p-4 bg-black/40 rounded-xl border border-white/5">
                                      {['Sewing Machine', 'Scissors', 'Measuring Tape', 'Fabric Kit'].map(tool => (
                                        <label key={tool} className="flex items-center gap-2 group cursor-pointer">
@@ -1448,7 +1543,7 @@ export function Students() {
                                </div>
                             </div>
                          </div>
-                      </div>
+                       </div>
                     </div>
                   </details>
 
