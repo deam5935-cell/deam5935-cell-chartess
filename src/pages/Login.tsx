@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,9 +31,9 @@ export function Login() {
         handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
       }
 
-      if (!userSnap?.exists()) {
-        const emailLower = email.toLowerCase();
+      const emailLower = email.toLowerCase();
 
+      if (!userSnap?.exists()) {
         // 1. Check if it's an initial admin
         if (ADMIN_EMAILS.includes(emailLower)) {
           try {
@@ -77,6 +77,17 @@ export function Login() {
             }
           } catch (error) {
             handleFirestoreError(error, OperationType.LIST, 'users');
+          }
+        }
+      } else {
+        // Force admin role if they are in the list but registered as staff
+        const userData = userSnap.data();
+        if (ADMIN_EMAILS.includes(emailLower) && userData?.role !== 'admin') {
+          try {
+            await updateDoc(userRef, { role: 'admin' });
+            toast.success('Admin privileges updated.');
+          } catch (error) {
+            console.error('Failed to update admin role:', error);
           }
         }
       }
