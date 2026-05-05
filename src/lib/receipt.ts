@@ -8,6 +8,8 @@ interface ReceiptData {
   studentCourse: string;
   amount: number;
   balance?: number;
+  tuitionTotal?: number;
+  totalPaid?: number;
   date: Date;
   method: string;
   notes?: string;
@@ -25,21 +27,33 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  const logoUrl = "https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq";
+  // Robust SVG Data URI for the logo (Fashion silhouette leaning on 'C')
+  const logoUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDApIj4KICAgIDxwYXRoIGQ9Ik0zNSAxNUMzNSAxNy43NjE0IDMyLjc2MTQgMjAgMzAgMjBDMjcuMjM4NiAyMCAyNSAxNy43NjE0IDI1IDE1QzI1IDEyLjIzODYgMjcuMjM4NiAxMCAzMCAxMEMzMi43NjE0IDEwIDM1IDEyLjIzODYgMzUgMTVaIiBmaWxsPSIjMEEwRjFDIi8+CiAgICA8cGF0aCBkPSJNMzAgMjBDMjcuODkzMyAyMC4wMDYxIDI1LjI5MzYgMTkuODQ3OCAyMy40NzgxIEwxNi4zMDYxIDEzLjgwMDhMMTQuOTI3NSAxNy42MjExTDE4LjczNDEgMjUuOTQyOEwxNi4zMDYxIDI2LjU5OTFMMTMuNjc0NyAxOC43MTQ5TDExLjcwNzYgMjQuMTY1Mkw4LjI5MTkzIDIyLjkzOTlMMTMuMTUxIDEzLjM1OTZMMTguMjA4MyAxMC42Nzg5TDI0LjI3NTYgMTQuOTI3NSAyNy44OTMzIDE4LjY3MTdMMzIuMzA2MSAyNS44MDBMMzIuMzA2MSAzMC4zMDRMMzQuOTM3NSA0MC4zMDRMMzQuOTM3NSA0NS4zMDRMMzcuNjQ0IDQ5LjIzNkw0MC4yNzU0IDQ4LjQ5NDRMNDAuMjA5NiA0MC4zMDRMMzcuNjc2OCAzMC40Njg4TDM3LjY3NjggMjUuOTQyOEwzMCAyMFoiIGZpbGw9IiMwQTBGMUMiLz4KICAgIDxwYXRoIGQ9Ik0yMC44NTcyIDQzLjg4NzhMMjAuODU3MiA0MC4xMjY1QzE3Ljg5NjkgNDAuNDYyMiAxNi4yNDQ2IDM4LjQ2NDIgMTUuOTE1MSAzNS44NzY4QzE1LjYyNDIgMzMuNTE3MiAxNi4xNDA3IDMwLjk5NjQgMTkuMzg1NSAyOS4zODcyQzIxLjYwMTUgMjguMjg4NSAyNC45MjQ1IDI4LjM2MjIgMjYuOTc0NiAyOC42NzM4TDI2Ljk3NDYgMjQuMDA2N0MyNC4zNTA2IDIzLjYwNjcgMjEuMTg1NiAyMy4zMTYxIDE3Ljk3NzYgMjQuOTAxQzE0LjAwNzYgMjYuODk1MSAxMS45Nzg1IDMwLjY3ODQgMTIuMDE2OSAzNC44MzM2QzEyLjA1NTMgMzguOTg4NyAxNC4yOTMxIDQ0LjIyNzQgMTkuNTUwNSA0NS4wMTI2QzIwLjAxODggNDUuMDg3IDIwLjgzNjggNDUuMDExMSAyMC44NTcyIDQzLjg4NzhWiIgZmlsbD0iIzFDRTMzOCIvPgogIDwvZz4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBpZD0iY2xpcDAiPiogICAgICA8cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IndoaXRlIi8+CiAgICA8L2NsaXBQYXRoPgogIDwvZGVmcz4KPC9zdmc+";
+
+  const headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <div style="flex-shrink: 0;">
+        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
+      </div>
+      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
+        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
+          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
+          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
+          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+        </div>
+      </div>
+    </div>
+  `;
 
   receiptContainer.innerHTML = `
     <div style="border: 4px solid #0A0F1C; padding: 30px; position: relative; overflow: hidden;">
       <img src="${logoUrl}" crossOrigin="anonymous" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; opacity: 0.05; pointer-events: none;" />
       
-      <div style="display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
-        <div style="display: flex; gap: 20px; align-items: center;">
-          <img src="${logoUrl}" crossOrigin="anonymous" style="width: 80px; height: 80px; object-contain;" />
-          <div>
-            <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; color: #0A0F1C;">Charthess</h1>
-            <p style="margin: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; color: #1CA3B8;">School of Fashion</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Accra, Ghana | +233 24 123 4567</p>
-          </div>
-        </div>
+      ${headerHtml}
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
         <div style="text-align: right;">
           <h2 style="margin: 0; font-size: 24px; font-weight: 900; color: #1CA3B8; text-transform: uppercase;">Official Receipt</h2>
           <p style="margin: 5px 0 0 0; font-weight: bold;">No: ${data.receiptNo}</p>
@@ -60,15 +74,13 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
           <div style="font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px;">The Sum Of:</div>
           <div style="font-size: 24px; font-weight: 900; color: #0A0F1C; border-bottom: 1px dashed #eee; padding-bottom: 5px;">GH₵ ${data.amount.toLocaleString()}.00</div>
         </div>
-        ${data.balance !== undefined ? `
         <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; margin-bottom: 2px;">Outstanding Debt</div>
             <div style="font-weight: 900; font-size: 11px; color: #1CA3B8; text-transform: uppercase;">Current Academic Balance</div>
           </div>
-          <div style="font-size: 20px; font-weight: 900; color: ${data.balance > 0 ? '#e11d48' : '#059669'};">GH₵ ${data.balance.toLocaleString()}.00</div>
+          <div style="font-size: 20px; font-weight: 900; color: ${(data.balance ?? 0) > 0 ? '#e11d48' : '#059669'};">GH₵ ${(data.balance ?? 0).toLocaleString()}.00</div>
         </div>
-        ` : ''}
         <div style="display: grid; grid-template-columns: 150px 1fr; gap: 15px; margin-bottom: 10px;">
           <div style="font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px;">Being Payment For:</div>
           <div style="font-size: 16px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">${data.notes || 'School Academic & Practical Fees'}</div>
@@ -76,6 +88,25 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
         <div style="display: grid; grid-template-columns: 150px 1fr; gap: 15px; margin-bottom: 10px;">
           <div style="font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px;">Payment Method:</div>
           <div style="font-size: 16px; text-transform: capitalize;">${data.method}</div>
+        </div>
+      </div>
+
+      <!-- Financial Summary Section -->
+      <div style="margin: 30px 0; padding: 20px; border: 1px solid #eee; border-radius: 12px; background: #fafafa;">
+        <h3 style="margin: 0 0 15px 0; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #1CA3B8;">Ledger Statement Summary</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+          <div>
+            <p style="margin: 0; font-size: 9px; color: #888; font-weight: bold; text-transform: uppercase;">Total Tuition Fee</p>
+            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 900;">GH₵ ${(data.tuitionTotal || 0).toLocaleString()}.00</p>
+          </div>
+          <div>
+            <p style="margin: 0; font-size: 9px; color: #888; font-weight: bold; text-transform: uppercase;">Total Amount Paid</p>
+            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 900; color: #059669;">GH₵ ${(data.totalPaid || data.amount).toLocaleString()}.00</p>
+          </div>
+          <div>
+            <p style="margin: 0; font-size: 9px; color: #888; font-weight: bold; text-transform: uppercase;">Payment Arrears</p>
+            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 900; color: ${(data.balance ?? 0) > 0 ? '#e11d48' : '#059669'};">GH₵ ${(data.balance ?? 0).toLocaleString()}.00</p>
+          </div>
         </div>
       </div>
 
@@ -135,18 +166,31 @@ export const generateInvoicePDF = async (student: any) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  const logoUrl = "https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq";
+  // Robust SVG Data URI for the logo (Fashion silhouette leaning on 'C')
+  const logoUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDApIj4KICAgIDxwYXRoIGQ9Ik0zNSAxNUMzNSAxNy43NjE0IDMyLjc2MTQgMjAgMzAgMjBDMjcuMjM4NiAyMCAyNSAxNy43NjE0IDI1IDE1QzI1IDEyLjIzODYgMjcuMjM4NiAxMCAzMCAxMEMzMi43NjE0IDEwIDM1IDEyLjIzODYgMzUgMTVaIiBmaWxsPSIjMEEwRjFDIi8+CiAgICA8cGF0aCBkPSJNMzAgMjBDMjcuODkzMyAyMC4wMDYxIDI1LjI5MzYgMTkuODQ3OCAyMy40NzgxIEwxNi4zMDYxIDEzLjgwMDhMMTQuOTI3NSAxNy42MjExTDE4LjczNDEgMjUuOTQyOEwxNi4zMDYxIDI2LjU5OTFMMTMuNjc0NyAxOC43MTQ5TDExLjcwNzYgMjQuMTY1Mkw4LjI5MTkzIDIyLjkzOTlMMTMuMTUxIDEzLjM1OTZMMTguMjA4MyAxMC42Nzg5TDI0LjI3NTYgMTQuOTI3NSAyNy44OTMzIDE4LjY3MTdMMzIuMzA2MSAyNS44MDBMMzIuMzA2MSAzMC4zMDRMMzQuOTM3NSA0MC4zMDRMMzQuOTM3NSA0NS4zMDRMMzcuNjQ0IDQ5LjIzNkw0MC4yNzU0IDQ4LjQ5NDRMNDAuMjA5NiA0MC4zMDRMMzcuNjc2OCAzMC40Njg4TDM3LjY3NjggMjUuOTQyOEwzMCAyMFoiIGZpbGw9IiMwQTBGMUMiLz4KICAgIDxwYXRoIGQ9Ik0yMC44NTcyIDQzLjg4NzhMMjAuODU3MiA0MC4xMjY1QzE3Ljg5NjkgNDAuNDYyMiAxNi4yNDQ2IDM4LjQ2NDIgMTUuOTE1MSAzNS44NzY4QzE1LjYyNDIgMzMuNTE3MiAxNi4xNDA3IDMwLjk5NjQgMTkuMzg1NSAyOS4zODcyQzIxLjYwMTUgMjguMjg4NSAyNC45MjQ1IDI4LjM2MjIgMjYuOTc0NiAyOC42NzM4TDI2Ljk3NDYgMjQuMDA2N0MyNC4zNTA2IDIzLjYwNjcgMjEuMTg1NiAyMy4zMTYxIDE3Ljk3NzYgMjQuOTAxQzE0LjAwNzYgMjYuODk1MSAxMS45Nzg1IDMwLjY3ODQgMTIuMDE2OSAzNC44MzM2QzEyLjA1NTMgMzguOTg4NyAxNC4yOTMxIDQ0LjIyNzQgMTkuNTUwNSA0NS4wMTI2QzIwLjAxODggNDUuMDg3IDIwLjgzNjggNDUuMDExMSAyMC44NTcyIDQzLjg4NzhWiIgZmlsbD0iIzFDRTMzOCIvPgogIDwvZz4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBpZD0iY2xpcDAiPiogICAgICA8cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IndoaXRlIi8+CiAgICA8L2NsaXBQYXRoPgogIDwvZGVmcz4KPC9zdmc+";
+
+  const headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <div style="flex-shrink: 0;">
+        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
+      </div>
+      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
+        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
+          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
+          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
+          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+        </div>
+      </div>
+    </div>
+  `;
 
   receiptContainer.innerHTML = `
     <div style="padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 40px;">
-        <div style="display: flex; gap: 15px; align-items: center;">
-          <img src="${logoUrl}" crossOrigin="anonymous" style="width: 70px; height: 70px;" />
-          <div>
-            <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #0A0F1C;">Charthess</h1>
-            <p style="margin: 0; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #1CA3B8;">School of Fashion</p>
-          </div>
-        </div>
+      ${headerHtml}
+      
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 40px; margin-top: 20px;">
         <div style="text-align: right;">
           <h2 style="margin: 0; font-size: 32px; font-weight: 900; color: #0A0F1C; text-transform: uppercase; letter-spacing: -1px;">Invoice</h2>
           <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">Date: ${format(new Date(), 'PP')}</p>
@@ -269,20 +313,32 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  const logoUrl = data.schoolInfo?.logoUrl || "https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq";
+  // Robust SVG Data URI for the logo (Fashion silhouette leaning on 'C')
+  const logoUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDApIj4KICAgIDxwYXRoIGQ9Ik0zNSAxNUMzNSAxNy43NjE0IDMyLjc2MTQgMjAgMzAgMjBDMjcuMjM4NiAyMCAyNSAxNy43NjE0IDI1IDE1QzI1IDEyLjIzODYgMjcuMjM4NiAxMCAzMCAxMEMzMi43NjE0IDEwIDM1IDEyLjIzODYgMzUgMTVaIiBmaWxsPSIjMEEwRjFDIi8+CiAgICA8cGF0aCBkPSJNMzAgMjBDMjcuODkzMyAyMC4wMDYxIDI1LjI5MzYgMTkuODQ3OCAyMy40NzgxIEwxNi4zMDYxIDEzLjgwMDhMMTQuOTI3NSAxNy42MjExTDE4LjczNDEgMjUuOTQyOEwxNi4zMDYxIDI2LjU5OTFMMTMuNjc0NyAxOC43MTQ5TDExLjcwNzYgMjQuMTY1Mkw4LjI5MTkzIDIyLjkzOTlMMTMuMTUxIDEzLjM1OTZMMTguMjA4MyAxMC42Nzg5TDI0LjI3NTYgMTQuOTI3NSAyNy44OTMzIDE4LjY3MTdMMzIuMzA2MSAyNS44MDBMMzIuMzA2MSAzMC4zMDRMMzQuOTM3NSA0MC4zMDRMMzQuOTM3NSA0NS4zMDRMMzcuNjQ0IDQ5LjIzNkw0MC4yNzU0IDQ4LjQ5NDRMNDAuMjA5NiA0MC4zMDRMMzcuNjc2OCAzMC40Njg4TDM3LjY3NjggMjUuOTQyOEwzMCAyMFoiIGZpbGw9IiMwQTBGMUMiLz4KICAgIDxwYXRoIGQ9Ik0yMC44NTcyIDQzLjg4NzhMMjAuODU3MiA0MC4xMjY1QzE3Ljg5NjkgNDAuNDYyMiAxNi4yNDQ2IDM4LjQ2NDIgMTUuOTE1MSAzNS44NzY4QzE1LjYyNDIgMzMuNTE3MiAxNi4xNDA3IDMwLjk5NjQgMTkuMzg1NSAyOS4zODcyQzIxLjYwMTUgMjguMjg4NSAyNC45MjQ1IDI4LjM2MjIgMjYuOTc0NiAyOC42NzM4TDI2Ljk3NDYgMjQuMDA2N0MyNC4zNTA2IDIzLjYwNjcgMjEuMTg1NiAyMy4zMTYxIDE3Ljk3NzYgMjQuOTAxQzE0LjAwNzYgMjYuODk1MSAxMS45Nzg1IDMwLjY3ODQgMTIuMDE2OSAzNC44MzM2QzEyLjA1NTMgMzguOTg4NyAxNC4yOTMxIDQ0LjIyNzQgMTkuNTUwNSA0NS4wMTI2QzIwLjAxODggNDUuMDg3IDIwLjgzNjggNDUuMDExMSAyMC44NTcyIDQzLjg4NzhWiIgZmlsbD0iIzFDRTMzOCIvPgogIDwvZz4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBpZD0iY2xpcDAiPiogICAgICA8cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IndoaXRlIi8+CiAgICA8L2NsaXBQYXRoPgogIDwvZGVmcz4KPC9zdmc+";
   const student = data.student;
+
+  const headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <div style="flex-shrink: 0;">
+        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
+      </div>
+      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
+        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
+          <p style="margin: 0;">Tel.: +233 24 406 9348 / +233 24 786 4347</p>
+          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
+          <p style="margin: 0;">Location: Opposite Amser Fuel Station, Kotobabi - Alajo Road, Accra</p>
+          <p style="margin: 0;">Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+        </div>
+      </div>
+    </div>
+  `;
 
   receiptContainer.innerHTML = `
     <div style="border: 2px solid #0A0F1C; padding: 40px; position: relative; background: #fff;">
-      <div style="display: flex; justify-content: space-between; align-items: start; border-bottom: 4px solid #0A0F1C; padding-bottom: 20px; margin-bottom: 30px;">
-        <div style="display: flex; gap: 20px; align-items: center;">
-          <img src="${logoUrl}" crossOrigin="anonymous" style="width: 100px; height: 100px; object-contain;" />
-          <div>
-            <h1 style="margin: 0; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px;">${data.schoolInfo?.name || 'Charthess'}</h1>
-            <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 5px; color: #1CA3B8;">${data.schoolInfo?.tagline || 'School of Fashion'}</p>
-            <p style="margin: 8px 0 0 0; font-size: 13px; color: #444;">Accra, Ghana | +233 24 123 4567</p>
-          </div>
-        </div>
+      ${headerHtml}
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
         <div style="text-align: right;">
           <div style="background: #0A0F1C; color: white; padding: 10px 20px; font-weight: 900; text-transform: uppercase; font-size: 18px; margin-bottom: 10px;">Official Enrollment Document</div>
           <p style="margin: 0; font-weight: bold;">Admission No: CH-${student.id ? student.id.substring(0, 8).toUpperCase() : 'NEW'}</p>

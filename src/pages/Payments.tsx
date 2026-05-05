@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Plus, Search, DollarSign, Wallet, Calendar, CreditCard, ChevronDown, CheckCircle2, Clock, Trash2, X, Pencil, FileText, Download, Printer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -61,6 +61,32 @@ export function Payments() {
     };
   }, []);
 
+  const syncStudentBalance = async (studentId: string) => {
+    try {
+      // Fetch all paid payments for this student
+      const q = query(collection(db, 'payments'), where('studentId', '==', studentId), where('status', '==', 'paid'));
+      const snapshot = await getDocs(q);
+      const totalPaid = snapshot.docs.reduce((acc, doc) => acc + (doc.data().amount || 0), 0);
+      
+      const student = students.find(s => s.id === studentId);
+      if (student) {
+        const studentRef = doc(db, 'students', studentId);
+        const tuitionTotal = (Number(student.tuitionTotal) || 0);
+        const newBalance = Math.max(0, tuitionTotal - totalPaid);
+        
+        await updateDoc(studentRef, {
+          amountPaid: totalPaid,
+          balance: newBalance,
+          updatedAt: serverTimestamp()
+        });
+        return { totalPaid, balance: newBalance };
+      }
+    } catch (error) {
+      console.error('Error syncing student balance:', error);
+    }
+    return null;
+  };
+
   const onSubmit = async (data: PaymentFormValues) => {
     try {
       const payload = {
@@ -71,10 +97,8 @@ export function Payments() {
       };
 
       if (isEditMode && editingPaymentId) {
-        // When editing, we might need to recalculate. To keep it simple for now, 
-        // we just update the payment and assume the user manually corrects student records if needed,
-        // OR we pull the latest student data and update.
         await updateDoc(doc(db, 'payments', editingPaymentId), payload);
+        await syncStudentBalance(data.studentId);
         toast.success('Payment record updated');
       } else {
         const docRef = await addDoc(collection(db, 'payments'), {
@@ -82,26 +106,12 @@ export function Payments() {
           createdAt: serverTimestamp()
         });
 
-        // Update Student Balance
-        const studentRef = doc(db, 'students', data.studentId);
-        const student = students.find(s => s.id === data.studentId);
-        let currentBalance = student?.balance;
-
-        if (student && data.status === 'paid') {
-          const newAmountPaid = (Number(student.amountPaid) || 0) + data.amount;
-          currentBalance = Math.max(0, (Number(student.tuitionTotal) || 0) - newAmountPaid);
-          
-          await updateDoc(studentRef, {
-            amountPaid: newAmountPaid,
-            balance: currentBalance,
-            updatedAt: serverTimestamp()
-          });
-        }
+        const syncResult = await syncStudentBalance(data.studentId);
 
         toast.success('Payment recorded successfully', {
           action: data.status === 'paid' ? {
             label: 'Print Receipt',
-            onClick: () => handleDownloadReceipt({ ...payload, id: docRef.id }, currentBalance)
+            onClick: () => handleDownloadReceipt({ ...payload, id: docRef.id }, syncResult?.balance)
           } : undefined
         });
       }
@@ -129,12 +139,13 @@ export function Payments() {
     setValue('notes', payment.notes || '');
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, studentId: string) => {
     if (!isAdmin) return toast.error('Only admins can delete records');
-    if (!window.confirm('Delete this payment record? This will NOT automatically reverse the student balance increment.')) return;
+    if (!window.confirm('Delete this payment record? This will automatically recalculate the student balance.')) return;
     try {
       await deleteDoc(doc(db, 'payments', id));
-      toast.success('Payment deleted');
+      await syncStudentBalance(studentId);
+      toast.success('Payment deleted and balance updated');
     } catch (error: any) {
       handleFirestoreError(error, OperationType.DELETE, `payments/${id}`);
     }
@@ -144,6 +155,13 @@ export function Payments() {
     const student = students.find(s => s.id === payment.studentId);
     if (!student) return toast.error('Student data not found');
 
+    // Robust calculation of total paid so far for this student
+    const studentTotalPaid = payments
+      .filter(p => p.studentId === payment.studentId && p.status === 'paid')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    const tuitionTotal = (Number(student.tuitionTotal) || 0);
+
     const toastId = toast.loading('Generating receipt...');
     try {
       await generateReceiptPDF({
@@ -151,7 +169,9 @@ export function Payments() {
         studentName: student.fullName,
         studentCourse: student.course || 'Fashion Design',
         amount: payment.amount,
-        balance: overrideBalance !== undefined ? overrideBalance : student.balance,
+        balance: overrideBalance !== undefined ? overrideBalance : Math.max(0, tuitionTotal - studentTotalPaid),
+        tuitionTotal: tuitionTotal,
+        totalPaid: studentTotalPaid,
         date: payment.date instanceof Date ? payment.date : payment.date.toDate(),
         method: payment.method,
         notes: payment.notes,
@@ -270,7 +290,7 @@ export function Payments() {
                             <Pencil size={16} />
                          </button>
                          {isAdmin && (
-                            <button onClick={() => handleDelete(payment.id)} className="p-2 text-rose-400/70 hover:text-rose-400 rounded-md transition-all">
+                            <button onClick={() => handleDelete(payment.id, payment.studentId)} className="p-2 text-rose-400/70 hover:text-rose-400 rounded-md transition-all">
                               <Trash2 size={16} />
                             </button>
                          )}
