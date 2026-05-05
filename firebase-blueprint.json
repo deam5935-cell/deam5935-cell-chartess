@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Staff or Admin user in the school system",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "format": "email", "description": "Email address" },
+        "role": { "type": "string", "enum": ["admin", "staff"], "description": "User role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
+      },
+      "required": ["name", "email", "role", "createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student enrolled in the fashion school",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "photoUrl": { "type": "string", "description": "URL of the student's profile photo" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "course": { "type": "string" },
+        "specialization": { "type": "string", "description": "e.g., tailoring, design, styling" },
+        "enrollmentDate": { "type": "string", "format": "date" },
+        "tuitionTotal": { "type": "number", "description": "Global expected tuition amount" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["fullName", "phone", "course", "enrollmentDate", "status"]
+    },
+    "PortfolioItem": {
+      "title": "Portfolio Item",
+      "description": "An item in a student's design portfolio",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "imageUrl", "date"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Financial transaction record",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "Reference to student" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "method": { "type": "string", "enum": ["cash", "transfer", "other"] },
+        "status": { "type": "string", "enum": ["paid", "pending"] },
+        "recordedBy": { "type": "string", "description": "Staff member ID who recorded the payment" }
+      },
+      "required": ["studentId", "amount", "date", "method", "status", "recordedBy"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record for a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "absent"] }
+      },
+      "required": ["studentId", "date", "status"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "User", "description": "Collection of staff and admin users" },
+    "students": { "schema": "Student", "description": "Collection of all students" },
+    "portfolio": { "schema": "PortfolioItem", "description": "Collection of design uploads for student portfolios" },
+    "payments": { "schema": "Payment", "description": "Collection of all payment records" },
+    "attendance": { "schema": "Attendance", "description": "Collection of attendance records" }
+  }
+}
