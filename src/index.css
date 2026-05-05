@@ -55,3 +55,11 @@
   @apply px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest;
 }
 
+.field-label {
+  @apply text-[10px] font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2;
+}
+
+.error-text {
+  @apply text-rose-500 text-[10px] mt-1 uppercase font-bold;
+}
+

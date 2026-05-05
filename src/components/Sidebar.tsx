@@ -61,10 +61,22 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-border-dark">
+      <div className="p-4 mt-auto border-t border-border-dark space-y-4">
+        <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/5">
+           <p className="text-[10px] font-black uppercase tracking-widest text-text-gray mb-1">Authenticated As</p>
+           <p className="text-[11px] font-bold text-white truncate">{useAuth().user?.email}</p>
+           <div className="flex items-center gap-2 mt-2">
+              <span className={cn(
+                "text-[8px] font-black uppercase px-2 py-0.5 rounded-full border",
+                userRole === 'admin' ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+              )}>
+                {userRole || 'Pending...'}
+              </span>
+           </div>
+        </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer border border-transparent hover:border-red-500/20"
         >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>

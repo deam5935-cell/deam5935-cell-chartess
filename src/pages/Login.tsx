@@ -31,7 +31,7 @@ export function Login() {
         handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
       }
 
-      const emailLower = email.toLowerCase();
+      const emailLower = email.toLowerCase().trim();
 
       if (!userSnap?.exists()) {
         // 1. Check if it's an initial admin
@@ -58,8 +58,12 @@ export function Login() {
               const data = existingRecord.data();
               
               // Move data to the UID-based document
+              // ENSURE: If the email is in the admin list, force role admin even if old record says staff
+              const targetRole = ADMIN_EMAILS.includes(emailLower) ? 'admin' : (data.role || 'staff');
+
               await setDoc(userRef, {
                 ...data,
+                role: targetRole,
                 createdAt: data.createdAt || serverTimestamp()
               });
               
@@ -68,7 +72,7 @@ export function Login() {
                 await deleteDoc(existingRecord.ref);
               }
               
-              toast.success('Staff account linked.');
+              toast.success(targetRole === 'admin' ? 'Admin account linked.' : 'Staff account linked.');
             } else {
               toast.error('Account not authorized. contact administrator.');
               await auth.signOut();

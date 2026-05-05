@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Plus, Search, DollarSign, Wallet, Calendar, CreditCard, ChevronDown, CheckCircle2, Clock, Trash2, X, Pencil, FileText, Download } from 'lucide-react';
+import { Plus, Search, DollarSign, Wallet, Calendar, CreditCard, ChevronDown, CheckCircle2, Clock, Trash2, X, Pencil, FileText, Download, Printer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { generateReceiptPDF } from '../lib/receipt';
+import { useNavigate } from 'react-router-dom';
 
 const paymentSchema = z.object({
   studentId: z.string().min(1, 'Select a student'),
@@ -24,6 +25,7 @@ type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 export function Payments() {
   const { isAdmin, user } = useAuth();
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,16 +40,12 @@ export function Payments() {
   });
 
   useEffect(() => {
-    // Fetch students for dropdown
-    const fetchStudents = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'students'));
-        setStudents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'students');
-      }
-    };
-    fetchStudents();
+    // Real-time students for dropdown and balance
+    const studentsUnsubscribe = onSnapshot(collection(db, 'students'), (snapshot) => {
+      setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'students');
+    });
 
     // Real-time payments
     const q = query(collection(db, 'payments'), orderBy('date', 'desc'));
@@ -57,7 +55,10 @@ export function Payments() {
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'payments');
     });
-    return () => unsubscribe();
+    return () => {
+      studentsUnsubscribe();
+      unsubscribe();
+    };
   }, []);
 
   const onSubmit = async (data: PaymentFormValues) => {
@@ -70,14 +71,39 @@ export function Payments() {
       };
 
       if (isEditMode && editingPaymentId) {
+        // When editing, we might need to recalculate. To keep it simple for now, 
+        // we just update the payment and assume the user manually corrects student records if needed,
+        // OR we pull the latest student data and update.
         await updateDoc(doc(db, 'payments', editingPaymentId), payload);
         toast.success('Payment record updated');
       } else {
-        await addDoc(collection(db, 'payments'), {
+        const docRef = await addDoc(collection(db, 'payments'), {
           ...payload,
           createdAt: serverTimestamp()
         });
-        toast.success('Payment recorded successfully');
+
+        // Update Student Balance
+        const studentRef = doc(db, 'students', data.studentId);
+        const student = students.find(s => s.id === data.studentId);
+        let currentBalance = student?.balance;
+
+        if (student && data.status === 'paid') {
+          const newAmountPaid = (Number(student.amountPaid) || 0) + data.amount;
+          currentBalance = Math.max(0, (Number(student.tuitionTotal) || 0) - newAmountPaid);
+          
+          await updateDoc(studentRef, {
+            amountPaid: newAmountPaid,
+            balance: currentBalance,
+            updatedAt: serverTimestamp()
+          });
+        }
+
+        toast.success('Payment recorded successfully', {
+          action: data.status === 'paid' ? {
+            label: 'Print Receipt',
+            onClick: () => handleDownloadReceipt({ ...payload, id: docRef.id }, currentBalance)
+          } : undefined
+        });
       }
       
       setIsModalOpen(false);
@@ -105,7 +131,7 @@ export function Payments() {
 
   const handleDelete = async (id: string) => {
     if (!isAdmin) return toast.error('Only admins can delete records');
-    if (!window.confirm('Delete this payment record?')) return;
+    if (!window.confirm('Delete this payment record? This will NOT automatically reverse the student balance increment.')) return;
     try {
       await deleteDoc(doc(db, 'payments', id));
       toast.success('Payment deleted');
@@ -114,7 +140,7 @@ export function Payments() {
     }
   };
 
-  const handleDownloadReceipt = async (payment: any) => {
+  const handleDownloadReceipt = async (payment: any, overrideBalance?: number) => {
     const student = students.find(s => s.id === payment.studentId);
     if (!student) return toast.error('Student data not found');
 
@@ -125,7 +151,8 @@ export function Payments() {
         studentName: student.fullName,
         studentCourse: student.course || 'Fashion Design',
         amount: payment.amount,
-        date: payment.date.toDate(),
+        balance: overrideBalance !== undefined ? overrideBalance : student.balance,
+        date: payment.date instanceof Date ? payment.date : payment.date.toDate(),
         method: payment.method,
         notes: payment.notes,
         recordedBy: user?.displayName || 'Staff'
@@ -194,7 +221,12 @@ export function Payments() {
                   <tr key={payment.id} className="group">
                     <td>
                       <div className="flex flex-col">
-                        <p className="font-bold">{getStudentName(payment.studentId)}</p>
+                        <button 
+                          onClick={() => navigate(`/students?id=${payment.studentId}`)}
+                          className="text-left font-bold hover:text-primary transition-colors cursor-pointer"
+                        >
+                          {getStudentName(payment.studentId)}
+                        </button>
                         <p className="text-[10px] text-primary/70 font-mono tracking-tight uppercase">ID: {payment.studentId.substring(0, 8)}</p>
                       </div>
                       <p className="text-[10px] text-text-gray mt-1">{payment.notes || 'No notes'}</p>
@@ -227,10 +259,11 @@ export function Payments() {
                          {payment.status === 'paid' && (
                            <button 
                              onClick={() => handleDownloadReceipt(payment)} 
-                             className="p-2 text-emerald-400/70 hover:text-emerald-400 rounded-md transition-all tooltip"
-                             title="Download Receipt"
+                             className="px-3 py-1.5 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-emerald-500/20"
+                             title="Print Receipt"
                            >
-                              <FileText size={16} />
+                              <Printer size={14} />
+                              Receipt
                            </button>
                          )}
                          <button onClick={() => handleEdit(payment)} className="p-2 text-primary/70 hover:text-primary rounded-md transition-all">
