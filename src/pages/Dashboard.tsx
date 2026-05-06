@@ -8,8 +8,8 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
 export function Dashboard() {
-  const { userRole, isAdmin } = useAuth();
-  const isStaffValue = userRole === 'admin' || userRole === 'staff';
+  const { isAdmin, userRole } = useAuth();
+  const isStaffValue = isAdmin || userRole === 'staff';
 
   const [stats, setStats] = useState({
     totalStudents: 0,

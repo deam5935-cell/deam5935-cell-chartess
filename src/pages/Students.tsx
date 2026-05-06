@@ -113,7 +113,7 @@ type StudentFormValues = z.infer<typeof studentSchema>;
 export function Students() {
   const { isAdmin, userRole } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isStaffValue = userRole === 'admin' || userRole === 'staff';
+  const isStaffValue = isAdmin || userRole === 'staff';
   
   const handlePrintEnrollment = async (student: any) => {
     try {

@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
 
 export function Sidebar() {
-  const { userRole } = useAuth();
+  const { userRole, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ export function Sidebar() {
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
   ];
 
-  if (userRole === 'admin') {
+  if (isAdmin) {
     navItems.push({ name: 'Staff', path: '/staff', icon: UsersRound });
   }
 
@@ -88,9 +88,9 @@ export function Sidebar() {
            <div className="flex items-center gap-2 mt-2">
               <span className={cn(
                 "text-[8px] font-black uppercase px-2 py-0.5 rounded-full border",
-                userRole === 'admin' ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                isAdmin ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
               )}>
-                {userRole || 'Pending...'}
+                {isAdmin ? 'ADMIN ACCOUNT' : (userRole || 'Pending...')}
               </span>
            </div>
         </div>
