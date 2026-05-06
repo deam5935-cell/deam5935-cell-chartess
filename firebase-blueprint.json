@@ -66,6 +66,22 @@
         "status": { "type": "string", "enum": ["present", "absent"] }
       },
       "required": ["studentId", "date", "status"]
+    },
+    "Salary": {
+      "title": "Salary Disbursement",
+      "description": "Record of salary paid to a staff member",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string" },
+        "staffName": { "type": "string" },
+        "amount": { "type": "number" },
+        "month": { "type": "string" },
+        "year": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["staffId", "staffName", "amount", "month", "year", "date", "createdAt"]
     }
   },
   "firestore": {
@@ -73,6 +89,7 @@
     "students": { "schema": "Student", "description": "Collection of all students" },
     "portfolio": { "schema": "PortfolioItem", "description": "Collection of design uploads for student portfolios" },
     "payments": { "schema": "Payment", "description": "Collection of all payment records" },
-    "attendance": { "schema": "Attendance", "description": "Collection of attendance records" }
+    "attendance": { "schema": "Attendance", "description": "Collection of attendance records" },
+    "salaries": { "schema": "Salary", "description": "Collection of salary disbursement records" }
   }
 }

@@ -28,19 +28,15 @@ export function Sidebar() {
 
   return (
     <aside className="w-[240px] bg-bg-black border-r border-border flex flex-col h-screen sticky top-0">
-      <div className="p-6 flex flex-col gap-4">
-        <div className="flex items-center gap-3">
+      <div className="pt-12 pb-8 px-6 flex flex-col gap-4">
+        <div className="flex items-center justify-center">
           <img 
-            src="/logo1.png" 
+            src="/charthess_logo-1.png" 
             alt="Charthess Logo" 
-            className="h-[45px] w-auto object-contain drop-shadow-[0_0_10px_rgba(28,163,184,0.3)]"
+            className="h-[85px] w-auto object-contain drop-shadow-[0_0_20px_rgba(28,163,184,0.5)]"
             referrerPolicy="no-referrer"
             loading="eager"
           />
-          <div className="leading-tight">
-            <h1 className="text-[18px] font-black uppercase tracking-tighter text-white">Charthess</h1>
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-primary">School of Fashion</p>
-          </div>
         </div>
       </div>
 

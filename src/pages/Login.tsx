@@ -143,20 +143,15 @@ export function Login() {
       </div>
 
       <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center pt-10">
           {/* Primary Branding Logo Above Form */}
-          <div className="mb-5">
+          <div className="mb-10">
              <img 
-              src="/logo1.png" 
+              src="/charthess_logo-1.png" 
               alt="Charthess School of Fashion Logo" 
-              className="w-[150px] h-auto drop-shadow-[0_0_20px_rgba(28,163,184,0.3)]"
+              className="w-[320px] h-auto drop-shadow-[0_0_40px_rgba(28,163,184,0.5)] transition-all duration-700 animate-in fade-in zoom-in-95"
               referrerPolicy="no-referrer"
             />
-          </div>
-          
-          <div className="text-center mb-4">
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Charthess</h1>
-            <p className="text-[9px] font-bold uppercase tracking-[0.6em] text-primary mt-1 border-t border-primary/20 pt-2 inline-block">School of Fashion</p>
           </div>
         </div>
 

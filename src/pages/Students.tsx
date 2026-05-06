@@ -1271,12 +1271,23 @@ export function Students() {
                         <div className="space-y-2">
                           <label className="field-label">Academic Program</label>
                           <select {...register('course')} className="input-field appearance-none bg-bg-dark">
-                            <option value="Free Hand Cutting">Free Hand Cutting (1 year + internship)</option>
+                            <option value="">Select Program</option>
+                            <option value="Diploma Certification">Diploma Certification - 1 and half years with 6 months internship</option>
+                            <option value="Advance Certification">Advance Certification - 1 year with 6 months internship</option>
+                            <option value="Advance - Free Hand Cutting">Advance - Free Hand Cutting - 1 year with internship</option>
+                            <option value="Certificate Programme">Certificate Programme - 6 months</option>
+                            <option value="Free Hand Cutting - Original">Free Hand Cutting (1 year + internship)</option>
                             <option value="Dressmaking / Fashion Design">Dressmaking / Fashion Design</option>
                             <option value="Tailoring">Tailoring</option>
                             <option value="Advanced Fashion">Advanced Fashion</option>
                             <option value="Other">Other (Special Request)</option>
                           </select>
+                          <div className="mt-2 space-y-0.5">
+                            <p className="text-[9px] text-text-gray font-bold uppercase tracking-tight">*Diploma Certification - 1 and half years with 6 months internship</p>
+                            <p className="text-[9px] text-text-gray font-bold uppercase tracking-tight">*Advance Certification - 1 year with 6 months internship</p>
+                            <p className="text-[9px] text-text-gray font-black uppercase tracking-tight text-primary">*Advance - Free Hand Cutting - 1 year with internship</p>
+                            <p className="text-[9px] text-text-gray font-bold uppercase tracking-tight">*Certificate Programme - 6 months</p>
+                          </div>
                           {watchCourse === 'Other' && (
                             <input {...register('courseOther')} className="input-field mt-3 animate-in fade-in" placeholder="Specify Program Name" />
                           )}
@@ -1458,6 +1469,11 @@ export function Students() {
                             <input type="date" {...register('finalPaymentDate')} className="input-field bg-white/5" />
                          </div>
                       </div>
+
+                      <div className="pt-6 border-t border-white/5 space-y-2">
+                        <label className="field-label font-black text-rose-400 uppercase tracking-widest">Payment Terms & Instructions</label>
+                        <p className="text-[10px] text-text-gray font-black italic">All fees paid are non-refundable.</p>
+                      </div>
                     </div>
                   </details>
 
@@ -1549,6 +1565,10 @@ export function Students() {
                                     <label className="flex items-center gap-3 group cursor-pointer">
                                       <input type="checkbox" {...register('starterKitSewingKits')} className="w-5 h-5 accent-primary rounded cursor-pointer" />
                                       <span className="text-[10px] font-black text-text-gray group-hover:text-primary transition-colors uppercase">Sewing Kits</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 group cursor-pointer">
+                                      <input type="checkbox" {...register('starterKitUniforms')} className="w-5 h-5 accent-primary rounded cursor-pointer" />
+                                      <span className="text-[10px] font-black text-text-gray group-hover:text-primary transition-colors uppercase">Uniforms</span>
                                     </label>
                                   </div>
                                </div>

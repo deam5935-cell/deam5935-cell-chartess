@@ -28,7 +28,7 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
   // Local logo asset
-  const logoUrl = "/logo1.png";
+  const logoUrl = "/charthess_logo-1.png";
 
   const headerHtml = `
     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
@@ -166,7 +166,7 @@ export const generateInvoicePDF = async (student: any) => {
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
   // Local logo asset
-  const logoUrl = "/logo1.png";
+  const logoUrl = "/charthess_logo-1.png";
 
   const headerHtml = `
     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
@@ -312,7 +312,7 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
   // Local logo asset
-  const logoUrl = "/logo1.png";
+  const logoUrl = "/charthess_logo-1.png";
   const student = data.student;
 
   const headerHtml = `
