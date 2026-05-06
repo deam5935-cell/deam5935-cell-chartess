@@ -6,7 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User as UserIcon, Lock, Loader2 } from 'lucide-react';
 
-const ADMIN_EMAILS = ['marufadam7777@gmail.com', 'beisiwaa00@gmail.com', 'r9628606@gmail.com'];
+const ADMIN_EMAILS = [
+  'marufadam7777@gmail.com',
+  'beisiwaa00@gmail.com',
+  'r9628606@gmail.com'
+];
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -19,19 +23,24 @@ export function Login() {
     setLoading(true);
 
     try {
-      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = credential.user;
       
+      const emailLower = (user.email || email).toLowerCase().trim();
+
       // Check if user exists in Firestore
       const userRef = doc(db, 'users', user.uid);
       let userSnap;
       try {
         userSnap = await getDoc(userRef);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+      } catch (error: any) {
+        // If we can't read the doc, let's see why
+        console.error('Initial getDoc error:', error);
+        // If the user is an admin by email, we might want to try to create the doc anyway
+        if (!ADMIN_EMAILS.includes(emailLower)) {
+          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+        }
       }
-
-      const emailLower = email.toLowerCase().trim();
 
       if (!userSnap?.exists()) {
         // 1. Check if it's an initial admin
@@ -108,16 +117,21 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#05070a] p-4 relative overflow-hidden">
-      {/* Background Watermark Logo (Lowest Layer) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="opacity-[0.04] blur-[2px] transform scale-150">
-          <img 
-            src="https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq" 
-            alt="" 
-            className="w-full max-w-2xl object-contain"
-            referrerPolicy="no-referrer"
-            crossOrigin="anonymous"
-          />
+      {/* Background Watermark Layer (Dark Background + Logo Watermark) */}
+      <div className="absolute inset-0 z-0">
+        {/* Dark Background Base Overlay */}
+        <div className="absolute inset-0 bg-[#0A0F1C]" />
+        
+        {/* Logo Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="opacity-[0.08] blur-[1px] w-[600px] h-[600px] md:w-[800px] md:h-[800px]">
+            <img 
+              src="/logo1.png" 
+              alt="" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
       </div>
 
@@ -130,14 +144,13 @@ export function Login() {
 
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="flex flex-col items-center">
-          {/* Primary Branding Logo */}
-          <div className="mb-8">
+          {/* Primary Branding Logo Above Form */}
+          <div className="mb-5">
              <img 
-              src="https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq" 
+              src="/logo1.png" 
               alt="Charthess School of Fashion Logo" 
-              className="w-[140px] h-auto drop-shadow-[0_0_20px_rgba(28,163,184,0.4)]"
+              className="w-[150px] h-auto drop-shadow-[0_0_20px_rgba(28,163,184,0.3)]"
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
             />
           </div>
           

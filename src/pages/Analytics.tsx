@@ -35,7 +35,7 @@ export function Analytics() {
     totalRevenue: payments.filter(p => p.status === 'paid').reduce((acc, p) => acc + p.amount, 0),
     thisMonth: payments.filter(p => p.status === 'paid' && p.date >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((acc, p) => acc + p.amount, 0),
     thisWeek: payments.filter(p => p.status === 'paid' && isWithinInterval(p.date, { start: startOfWeek(new Date()), end: endOfWeek(new Date()) })).reduce((acc, p) => acc + p.amount, 0),
-    outstanding: payments.filter(p => p.status === 'pending').reduce((acc, p) => acc + p.amount, 0),
+    outstanding: students.reduce((acc, s) => acc + (Number(s.balance) || 0), 0),
     avgPerStudent: students.length > 0 ? payments.filter(p => p.status === 'paid').reduce((acc, p) => acc + p.amount, 0) / students.length : 0
   };
 

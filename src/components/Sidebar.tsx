@@ -31,11 +31,10 @@ export function Sidebar() {
       <div className="p-6 flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <img 
-            src="https://kommodo.ai/i/72EuMuVxBrOvNd3WZNHq" 
+            src="/logo1.png" 
             alt="Charthess Logo" 
-            className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(28,163,184,0.3)]"
+            className="h-[45px] w-auto object-contain drop-shadow-[0_0_10px_rgba(28,163,184,0.3)]"
             referrerPolicy="no-referrer"
-            crossOrigin="anonymous"
             loading="eager"
           />
           <div className="leading-tight">

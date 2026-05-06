@@ -11,6 +11,7 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { generateReceiptPDF } from '../lib/receipt';
 import { useNavigate } from 'react-router-dom';
+import { syncStudentBalance } from '../lib/finance';
 
 const paymentSchema = z.object({
   studentId: z.string().min(1, 'Select a student'),
@@ -61,31 +62,6 @@ export function Payments() {
     };
   }, []);
 
-  const syncStudentBalance = async (studentId: string) => {
-    try {
-      // Fetch all paid payments for this student
-      const q = query(collection(db, 'payments'), where('studentId', '==', studentId), where('status', '==', 'paid'));
-      const snapshot = await getDocs(q);
-      const totalPaid = snapshot.docs.reduce((acc, doc) => acc + (doc.data().amount || 0), 0);
-      
-      const student = students.find(s => s.id === studentId);
-      if (student) {
-        const studentRef = doc(db, 'students', studentId);
-        const tuitionTotal = (Number(student.tuitionTotal) || 0);
-        const newBalance = Math.max(0, tuitionTotal - totalPaid);
-        
-        await updateDoc(studentRef, {
-          amountPaid: totalPaid,
-          balance: newBalance,
-          updatedAt: serverTimestamp()
-        });
-        return { totalPaid, balance: newBalance };
-      }
-    } catch (error) {
-      console.error('Error syncing student balance:', error);
-    }
-    return null;
-  };
 
   const onSubmit = async (data: PaymentFormValues) => {
     try {

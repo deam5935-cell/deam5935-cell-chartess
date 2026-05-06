@@ -44,9 +44,7 @@ export function Dashboard() {
         .filter(p => p.status === 'paid')
         .reduce((acc, curr) => acc + (curr.amount || 0), 0);
         
-      const outstanding = payments
-        .filter(p => p.status === 'pending')
-        .reduce((acc, curr) => acc + (curr.amount || 0), 0);
+      const outstanding = students.reduce((acc, s) => acc + (Number(s.balance) || 0), 0);
 
       setStats({
         totalStudents: students.length,

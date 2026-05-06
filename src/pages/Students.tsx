@@ -12,6 +12,7 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { generateEnrollmentPDF, generateInvoicePDF } from '../lib/receipt';
+import { syncStudentBalance } from '../lib/finance';
 
 const studentSchema = z.object({
   // CORE FIELDS (For compatibility)
@@ -343,12 +344,32 @@ export function Students() {
 
       if (editingStudent) {
         await updateDoc(doc(db, 'students', editingStudent.id), payload);
-        toast.success('Student record updated', { id: toastId });
+        // Recalculate balance based on actual payments source of truth
+        await syncStudentBalance(editingStudent.id);
+        toast.success('Student record updated and balance synced', { id: toastId });
       } else {
-        await addDoc(collection(db, 'students'), {
+        const docRef = await addDoc(collection(db, 'students'), {
           ...payload,
           createdAt: serverTimestamp()
         });
+        
+        // If initial deposit was provided, record it in the payments ledger
+        if (data.amountPaid > 0) {
+          await addDoc(collection(db, 'payments'), {
+            studentId: docRef.id,
+            amount: Number(data.amountPaid),
+            date: new Date(),
+            method: 'cash',
+            status: 'paid',
+            notes: 'Initial deposit during enrollment',
+            recordedBy: userRole,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        }
+
+        // Even for new students, sync just to be safe (sets initial balance correctly)
+        await syncStudentBalance(docRef.id);
         toast.success('Student enrolled successfully', { id: toastId });
       }
       
@@ -1385,10 +1406,11 @@ export function Students() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                           <label className="field-label text-rose-400">Current Balance</label>
+                           <label className="field-label text-rose-400">Current Balance (Calculated)</label>
                            <div className="h-[46px] flex items-center px-4 bg-rose-500/5 rounded-lg border border-rose-500/20 font-black text-rose-400 text-lg">
                              GH₵ {calculatedBalance.toLocaleString()}
                            </div>
+                           <p className="text-[9px] text-text-gray italic">Total Fees - Total Paid</p>
                         </div>
                       </div>
 
@@ -1407,8 +1429,14 @@ export function Students() {
                            </div>
                          </div>
                          <div className="space-y-2">
-                           <label className="field-label text-emerald-400">Initial Deposit (GH₵)</label>
-                           <input type="number" {...register('amountPaid')} className="input-field font-black text-emerald-400" placeholder="0.00" />
+                           <label className="field-label text-emerald-400">{editingStudent ? 'Total Paid (Calculated from ledger)' : 'Initial Deposit (GH₵)'}</label>
+                            {editingStudent && <p className="text-[10px] text-text-gray italic mt-1 font-bold">Payments must be recorded in the Payments page</p>}
+
+                           <input type="number" {...register('amountPaid')} 
+                               className={cn("input-field font-black text-emerald-400", editingStudent && "bg-white/5 opacity-70")} 
+                               placeholder="0.00"
+                               readOnly={!!editingStudent} 
+                            />
                          </div>
                          <div className="space-y-2">
                             <label className="field-label font-black text-primary">Receipt Number</label>
