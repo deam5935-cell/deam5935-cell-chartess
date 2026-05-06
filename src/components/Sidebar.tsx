@@ -1,12 +1,14 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, CalendarCheck, BarChart3, UsersRound, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, CalendarCheck, BarChart3, UsersRound, LogOut, Sun, Moon } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
 
 export function Sidebar() {
   const { userRole } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -56,8 +58,31 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-border-dark space-y-4">
-        <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/5">
+      <div className="p-4 mt-auto border-t border-border space-y-4">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-bg-black border border-border hover:border-primary/30 transition-all group cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            {theme === 'dark' ? (
+              <Sun size={18} className="text-amber-400" />
+            ) : (
+              <Moon size={18} className="text-indigo-400" />
+            )}
+            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-main)]">
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          </div>
+          <div className="w-8 h-4 rounded-full bg-border relative transition-colors group-hover:bg-primary/20">
+            <div className={cn(
+              "absolute top-1 w-2 h-2 rounded-full transition-all duration-300",
+              theme === 'dark' ? "right-1 bg-amber-400" : "left-1 bg-indigo-400"
+            )} />
+          </div>
+        </button>
+
+        <div className="px-4 py-4 bg-white/5 rounded-xl border border-white/5">
            <p className="text-[10px] font-black uppercase tracking-widest text-text-gray mb-1">Authenticated As</p>
            <p className="text-[11px] font-bold text-white truncate">{useAuth().user?.email}</p>
            <div className="flex items-center gap-2 mt-2">

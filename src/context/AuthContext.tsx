@@ -58,8 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const isAdmin = userRole === 'admin' || (
+    user?.email?.toLowerCase() === 'marufadam7777@gmail.com' || 
+    user?.email?.toLowerCase() === 'beisiwaa00@gmail.com' ||
+    user?.email?.toLowerCase() === 'r9628606@gmail.com'
+  );
+
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, isAdmin: userRole === 'admin' }}>
+    <AuthContext.Provider value={{ user, userRole, loading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

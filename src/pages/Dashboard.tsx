@@ -133,7 +133,7 @@ export function Dashboard() {
             <Plus size={18} />
             <span>Add Student</span>
           </Link>
-          <Link to="/payments" className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-lg transition-all flex items-center gap-2 border border-white/10">
+          <Link to="/payments" className="bg-[var(--border-main)] hover:bg-primary/5 text-[var(--text-main)] px-6 py-2.5 rounded-lg transition-all flex items-center gap-2 border border-border">
             <CreditCard size={18} />
             <span>Record Payment</span>
           </Link>
@@ -148,13 +148,13 @@ export function Dashboard() {
               <stat.icon className={stat.color} size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-400 uppercase tracking-widest">{stat.name}</p>
-              <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+              <p className="text-sm font-medium text-text-gray uppercase tracking-widest">{stat.name}</p>
+              <h3 className="text-2xl font-bold mt-1 text-[var(--text-main)]">{stat.value}</h3>
             </div>
           </div>
         ))}
         {!isAdmin && (
-          <div className="lg:col-span-2 glass-card p-6 flex items-center justify-center border-dashed border-white/10 opacity-60">
+          <div className="lg:col-span-2 glass-card p-6 flex items-center justify-center border-dashed border-border opacity-60">
              <div className="flex flex-col items-center gap-2">
                 <ShieldAlert size={24} className="text-text-gray" />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-text-gray">Financial Metrics Hidden (Admin Only)</p>
@@ -166,8 +166,8 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Payments */}
         <div className="lg:col-span-2 glass-card overflow-hidden">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center">
-            <h3 className="font-bold flex items-center gap-2">
+          <div className="p-6 border-b border-border flex justify-between items-center">
+            <h3 className="font-bold flex items-center gap-2 text-[var(--text-main)]">
               <CreditCard size={18} className="text-primary" />
               Recent Payments
             </h3>
@@ -192,7 +192,7 @@ export function Dashboard() {
                   recentPayments.map((payment) => (
                     <tr key={payment.id}>
                       <td className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                        <div className="w-8 h-8 rounded-lg overflow-hidden surface-low shrink-0">
                           {studentsMap[payment.studentId]?.photoUrl ? (
                             <img src={studentsMap[payment.studentId]?.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
@@ -201,9 +201,9 @@ export function Dashboard() {
                             </div>
                           )}
                         </div>
-                        <span className="font-bold">{studentsMap[payment.studentId]?.name || 'Unknown Student'}</span>
+                        <span className="font-bold text-[var(--text-main)]">{studentsMap[payment.studentId]?.name || 'Unknown Student'}</span>
                       </td>
-                      <td className="font-mono">GH₵ {payment.amount.toLocaleString()}</td>
+                      <td className="font-mono text-[var(--text-main)]">GH₵ {payment.amount.toLocaleString()}</td>
                       <td className="text-text-gray italic">
                         {format(payment.date.toDate(), 'MMM dd, yyyy')}
                       </td>
@@ -225,7 +225,7 @@ export function Dashboard() {
 
         {/* Recent Activity */}
         <div className="glass-card p-6 space-y-6">
-          <h3 className="font-bold flex items-center gap-2 border-b border-white/5 pb-4 uppercase tracking-widest text-[11px] text-text-gray">
+          <h3 className="font-bold flex items-center gap-2 border-b border-border pb-4 uppercase tracking-widest text-[11px] text-text-gray">
              <Activity size={18} className="text-primary" />
              Recent System Activity
           </h3>
@@ -234,7 +234,7 @@ export function Dashboard() {
               <div key={idx} className="flex gap-3 text-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0 opacity-50"></div>
                 <div>
-                  <p className="text-gray-100 leading-relaxed">{activity.msg}</p>
+                  <p className="text-[var(--text-main)] leading-relaxed">{activity.msg}</p>
                   <p className="text-[10px] text-text-gray mt-1">{format(activity.date, 'MMM dd, HH:mm')}</p>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function Dashboard() {
       {/* Row 3: Outstanding Fees Widget */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-card overflow-hidden">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center bg-rose-500/5">
+          <div className="p-6 border-b border-border flex justify-between items-center bg-rose-500/5">
             <h3 className="font-bold flex items-center gap-2 text-rose-400">
               <DollarSign size={18} />
               Students With Outstanding Fees
@@ -271,7 +271,7 @@ export function Dashboard() {
                   topDebtors.map((debtor) => (
                     <tr key={debtor.id}>
                       <td className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                        <div className="w-8 h-8 rounded-lg overflow-hidden surface-low shrink-0">
                           {debtor.photoUrl ? (
                             <img src={debtor.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
@@ -280,7 +280,7 @@ export function Dashboard() {
                             </div>
                           )}
                         </div>
-                        <span className="font-bold">{debtor.fullName}</span>
+                        <span className="font-bold text-[var(--text-main)]">{debtor.fullName}</span>
                       </td>
                       <td className="text-text-gray text-xs">{debtor.course}</td>
                       <td className="text-right font-black text-rose-400">

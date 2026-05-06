@@ -1,14 +1,16 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Toaster } from 'sonner';
 
 export function Layout() {
   const { user } = useAuth();
+  const { theme } = useTheme();
 
   return (
-    <div className="flex min-h-screen bg-bg-black text-white selection:bg-primary/30">
-      <Toaster position="top-right" theme="dark" richColors />
+    <div className="flex min-h-screen bg-bg-black text-[var(--text-main)] selection:bg-primary/30 transition-colors duration-300">
+      <Toaster position="top-right" theme={theme} richColors />
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-x-hidden p-8">
         <header className="flex justify-end items-center mb-8">

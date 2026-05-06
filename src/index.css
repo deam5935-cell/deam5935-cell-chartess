@@ -3,27 +3,43 @@
 
 @theme {
   --color-primary: #1CA3B8;
-  --color-bg-black: #0A0F1C;
-  --color-card-dark: #121826;
-  --color-text-gray: #94A3B8;
-  --color-border: #1E293B;
+  --color-bg-black: var(--bg-main);
+  --color-card-dark: var(--bg-card);
+  --color-text-gray: var(--text-muted);
+  --color-border: var(--border-main);
   
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --shadow-geometric: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
+:root {
+  --bg-main: #0A0F1C;
+  --bg-card: #121826;
+  --text-main: #FFFFFF;
+  --text-muted: #94A3B8;
+  --border-main: #1E293B;
+}
+
+:root.light {
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border-main: #E2E8F0;
+}
+
 @layer base {
   body {
-    @apply bg-bg-black text-white font-sans antialiased;
+    @apply bg-bg-black text-[var(--text-main)] font-sans antialiased transition-colors duration-300;
   }
 }
 
 .glass-card {
-  @apply bg-card-dark/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-geometric transition-all duration-300;
+  @apply bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-main)] rounded-2xl shadow-geometric transition-all duration-300;
 }
 
 .input-field {
-  @apply w-full bg-bg-black border border-border rounded-lg px-4 py-2.5 text-white placeholder-text-gray/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm;
+  @apply w-full bg-transparent border border-border rounded-lg px-4 py-2.5 text-[var(--text-main)] placeholder-text-gray/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm;
 }
 
 .btn-primary {
@@ -31,7 +47,7 @@
 }
 
 .sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-text-gray hover:text-white transition-all text-sm;
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-text-gray hover:text-[var(--text-main)] transition-all text-sm;
 }
 
 .sidebar-link.active {
@@ -44,11 +60,19 @@
 }
 
 .geometric-table th {
-  @apply text-left px-6 py-3 text-[11px] font-bold text-text-gray uppercase tracking-widest bg-black/20;
+  @apply text-left px-6 py-3 text-[11px] font-bold text-text-gray uppercase tracking-widest bg-black/5 dark:bg-black/20;
 }
 
 .geometric-table td {
-  @apply px-6 py-4 text-[13px] border-b border-border;
+  @apply px-6 py-4 text-[13px] border-b border-border text-[var(--text-main)];
+}
+
+.surface-low {
+  @apply bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5;
+}
+
+.surface-high {
+  @apply bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/10;
 }
 
 .status-tag {

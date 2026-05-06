@@ -116,19 +116,19 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#05070a] p-4 relative overflow-hidden">
-      {/* Background Watermark Layer (Dark Background + Logo Watermark) */}
+    <div className="min-h-screen flex items-center justify-center bg-bg-black p-4 relative overflow-hidden transition-colors duration-500">
+      {/* Background Watermark Layer (Theme Background + Logo Watermark) */}
       <div className="absolute inset-0 z-0">
         {/* Dark Background Base Overlay */}
-        <div className="absolute inset-0 bg-[#0A0F1C]" />
+        <div className="absolute inset-0 bg-bg-black" />
         
         {/* Logo Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="opacity-[0.08] blur-[1px] w-[600px] h-[600px] md:w-[800px] md:h-[800px]">
+          <div className="opacity-[0.05] dark:opacity-[0.08] blur-[1px] w-[600px] h-[600px] md:w-[800px] md:h-[800px]">
             <img 
-              src="/logo1.png" 
+              src="/charthess_logo-1.png" 
               alt="" 
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain grayscale"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -137,9 +137,8 @@ export function Login() {
 
       {/* Ambient Glows */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 blur-[150px] rounded-full" />
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/5 dark:bg-primary/10 blur-[150px] rounded-full" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/5 blur-[150px] rounded-full" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-primary/5 blur-[180px] rounded-full" />
       </div>
 
       <div className="w-full max-w-md space-y-8 relative z-10">
@@ -158,9 +157,9 @@ export function Login() {
         <div className="glass-card p-8 md:p-10 z-20">
           <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-400 ml-1 uppercase tracking-wider">Email Address</label>
+              <label className="text-xs font-semibold text-text-gray ml-1 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="email"
                   required
@@ -173,9 +172,9 @@ export function Login() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-400 ml-1 uppercase tracking-wider">Password</label>
+              <label className="text-xs font-semibold text-text-gray ml-1 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="password"
                   required
@@ -204,7 +203,7 @@ export function Login() {
           </form>
         </div>
 
-        <p className="text-center text-gray-600 text-[10px] uppercase tracking-widest">
+        <p className="text-center text-text-gray text-[10px] uppercase tracking-widest">
           Private Staff Access Only
         </p>
       </div>
