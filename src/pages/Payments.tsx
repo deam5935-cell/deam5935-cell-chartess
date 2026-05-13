@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { generateReceiptPDF, generateBlankAdmissionFormPDF } from '../lib/receipt';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { syncStudentBalance } from '../lib/finance';
 
 const paymentSchema = z.object({
@@ -29,13 +29,14 @@ type PaymentFormValues = z.infer<typeof paymentSchema>;
 export function Payments() {
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [payments, setPayments] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
     resolver: zodResolver(paymentSchema),
@@ -223,7 +224,15 @@ export function Payments() {
             type="text"
             placeholder="Search by student name..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearchTerm(val);
+              setSearchParams(prev => {
+                if (val) prev.set('search', val);
+                else prev.delete('search');
+                return prev;
+              });
+            }}
             className="input-field pl-10"
           />
         </div>

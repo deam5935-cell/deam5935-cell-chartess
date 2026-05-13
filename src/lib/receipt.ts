@@ -28,28 +28,22 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  // Local logo asset
   const logoUrl = "/charthess_logo-1.png";
 
   const headerHtml = `
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-      <div style="flex-shrink: 0;">
-        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
-      </div>
-      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
-        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
-          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
-        </div>
+    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0A0F1C;">
+      <img src="${logoUrl}" style="height: 120px; width: auto; object-fit: contain; margin-bottom: 15px; filter: brightness(0);" />
+      <div style="font-size: 12px; color: #333; line-height: 1.4;">
+        <p style="margin: 0; font-weight: bold; font-size: 14px; color: #0A0F1C;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
+        <p style="margin: 2px 0;">Email: charthessfashions@gmail.com</p>
+        <p style="margin: 2px 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
       </div>
     </div>
   `;
 
   receiptContainer.innerHTML = `
     <div style="border: 4px solid #0A0F1C; padding: 30px; position: relative; overflow: hidden;">
-      <img src="${logoUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; opacity: 0.05; pointer-events: none;" />
+      <img src="${logoUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; opacity: 0.08; pointer-events: none; filter: brightness(0);" />
       
       ${headerHtml}
 
@@ -166,21 +160,15 @@ export const generateInvoicePDF = async (student: any) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  // Local logo asset
   const logoUrl = "/charthess_logo-1.png";
 
   const headerHtml = `
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-      <div style="flex-shrink: 0;">
-        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
-      </div>
-      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
-        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
-          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
-        </div>
+    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0A0F1C;">
+      <img src="${logoUrl}" style="height: 100px; width: auto; object-fit: contain; margin-bottom: 12px; filter: brightness(0);" />
+      <div style="font-size: 11px; color: #333; line-height: 1.4;">
+        <p style="margin: 0; font-weight: bold; font-size: 13px; color: #0A0F1C;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
+        <p style="margin: 2px 0;">Email: charthessfashions@gmail.com</p>
+        <p style="margin: 2px 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
       </div>
     </div>
   `;
@@ -312,22 +300,16 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  // Local logo asset
   const logoUrl = "/charthess_logo-1.png";
   const student = data.student;
 
   const headerHtml = `
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-      <div style="flex-shrink: 0;">
-        <img src="${logoUrl}" crossOrigin="anonymous" style="height: 70px; width: auto; object-fit: contain;" />
-      </div>
-      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000; font-family: 'Inter', sans-serif;">CHARTHESS SCHOOL OF FASHION</h1>
-        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
-          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
-        </div>
+    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0A0F1C;">
+      <img src="${logoUrl}" style="height: 100px; width: auto; object-fit: contain; margin-bottom: 12px; filter: brightness(0);" />
+      <div style="font-size: 11px; color: #333; line-height: 1.4;">
+        <p style="margin: 0; font-weight: bold; font-size: 13px; color: #0A0F1C;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
+        <p style="margin: 2px 0;">Email: charthessfashions@gmail.com</p>
+        <p style="margin: 2px 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
       </div>
     </div>
   `;
@@ -521,17 +503,12 @@ export const generateBlankAdmissionFormPDF = async () => {
   const logoUrl = "/charthess_logo-1.png";
 
   const headerHtml = `
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-      <div style="flex-shrink: 0;">
-        <img src="${logoUrl}" style="height: 70px; width: auto; object-fit: contain;" />
-      </div>
-      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000;">CHARTHESS SCHOOL OF FASHION</h1>
-        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
-          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
-          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
-          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
-        </div>
+    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0A0F1C;">
+      <img src="${logoUrl}" style="height: 100px; width: auto; object-fit: contain; margin-bottom: 12px; filter: brightness(0);" />
+      <div style="font-size: 11px; color: #333; line-height: 1.4;">
+        <p style="margin: 0; font-weight: bold; font-size: 13px; color: #0A0F1C;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
+        <p style="margin: 2px 0;">Email: charthessfashions@gmail.com</p>
+        <p style="margin: 2px 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
       </div>
     </div>
   `;

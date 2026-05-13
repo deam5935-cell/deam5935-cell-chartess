@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { Activity, Plus, Search, Filter, Edit2, Trash2, X, Phone, Mail, GraduationCap, Calendar, UserPlus, CreditCard, DollarSign, Camera, Image as ImageIcon, Loader2, Printer, FileText } from 'lucide-react';
+import { Activity, Plus, Search, Filter, Edit2, Trash2, X, Phone, Mail, GraduationCap, Calendar, UserPlus, CreditCard, DollarSign, Camera, Image as ImageIcon, Loader2, Printer, FileText, Receipt, Pencil, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +10,8 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { useSearchParams } from 'react-router-dom';
-import { generateEnrollmentPDF, generateInvoicePDF } from '../lib/receipt';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generateEnrollmentPDF, generateInvoicePDF, generateReceiptPDF } from '../lib/receipt';
 import { syncStudentBalance } from '../lib/finance';
 
 const studentSchema = z.object({
@@ -109,6 +109,7 @@ type StudentFormValues = z.infer<typeof studentSchema>;
 
 export function Students() {
   const { isAdmin, userRole } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isStaffValue = isAdmin || userRole === 'staff';
   
@@ -275,6 +276,24 @@ export function Students() {
   const lastPayment = studentPayments.length > 0 
     ? [...studentPayments].sort((a, b) => (b.date?.toDate?.() || 0) - (a.date?.toDate?.() || 0))[0]
     : null;
+
+  const handleDownloadReceipt = (payment: any) => {
+    if (!payment) return;
+    generateReceiptPDF({
+      receiptNo: payment.receiptNo || 'N/A',
+      studentName: viewingStudent?.fullName || 'Student',
+      studentCourse: viewingStudent?.course || 'General Program',
+      amount: payment.amount || 0,
+      balance: (viewingStudent?.tuitionTotal || 0) - coreTotalPaid,
+      tuitionTotal: viewingStudent?.tuitionTotal || 0,
+      totalPaid: coreTotalPaid,
+      date: payment.date?.toDate ? payment.date.toDate() : new Date(),
+      method: payment.method || 'Cash',
+      category: payment.category || 'tuition',
+      notes: payment.notes,
+      recordedBy: payment.recordedBy
+    });
+  };
 
   const uploadFile = async (file: File, path: string) => {
     return new Promise<string>((resolve, reject) => {
@@ -757,7 +776,19 @@ export function Students() {
                   </div>
 
                   <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-4">
-                    <p className="text-[10px] font-black text-text-gray uppercase tracking-widest mb-1">Fee Breakdown</p>
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="text-[10px] font-black text-text-gray uppercase tracking-widest">Fee Breakdown</p>
+                      <button 
+                        onClick={() => {
+                          closeModal();
+                          navigate(`/payments?search=${viewingStudent.fullName}`);
+                        }}
+                        className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Settings size={10} />
+                        Manage
+                      </button>
+                    </div>
                     <div className="space-y-2">
                        <div className="flex justify-between text-[10px] uppercase font-bold text-text-gray">
                           <span>Total Recorded</span>
@@ -1396,9 +1427,7 @@ export function Students() {
                             <input type="number" {...register('sewingKitsFee')} className="input-field pl-12 bg-bg-black" placeholder="250" />
                           </div>
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <label className="field-label">Total Expected *</label>
@@ -1423,12 +1452,82 @@ export function Students() {
                         </div>
                         <div className="space-y-2">
                            <label className="field-label text-rose-400">Current Balance (Calculated)</label>
-                           <div className="h-[46px] flex items-center px-4 bg-rose-500/5 rounded-lg border border-rose-500/20 font-black text-rose-400 text-lg">
-                             GH₵ {(Number(watchTuitionTotal) - Number(watchPaid)).toLocaleString()}
+                           <div className="h-[46px] flex items-center px-4 bg-rose-500/5 rounded-lg border border-rose-500/20 font-black text-rose-500 text-lg">
+                             GH₵ {(Number(watchTuitionTotal) - coreTotalPaid).toLocaleString()}
                            </div>
-                           <p className="text-[9px] text-text-gray italic">Total Fees - Total Paid</p>
+                           <p className="text-[9px] text-text-gray italic">Total Fees - Total Paid (Calculated from Ledger)</p>
                         </div>
                       </div>
+
+                      {/* Payment History Section */}
+                      <div className="pt-6 border-t border-white/5 space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                            <Receipt size={16} />
+                            Payment History (Fix mistakes in "Payments" page)
+                          </h4>
+                        </div>
+                        
+                        <div className="overflow-hidden border border-white/5 rounded-2xl">
+                          <table className="w-full text-left border-collapse bg-black/20">
+                            <thead>
+                              <tr className="bg-white/5">
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-text-gray">Date</th>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-text-gray">Category</th>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-text-gray">Amount</th>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-text-gray text-right">Receipt</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {studentPayments.length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-6 text-center text-text-gray italic text-xs">No payments recorded</td>
+                                </tr>
+                              ) : (
+                                [...studentPayments].sort((a,b) => (b.date?.toDate?.() || 0) - (a.date?.toDate?.() || 0)).map(payment => (
+                                  <tr key={payment.id} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-4 py-3 text-xs text-text-gray">
+                                      {payment.date?.toDate ? format(payment.date.toDate(), 'dd MMM yyyy') : 'N/A'}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-white/10 text-white/60">
+                                        {payment.category?.replace('_', ' ') || 'tuition'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-xs font-black text-white">GH₵ {payment.amount?.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right">
+                                      <div className="flex justify-end gap-2">
+                                        {payment.status === 'paid' && (
+                                          <button 
+                                            type="button"
+                                            onClick={() => handleDownloadReceipt(payment)}
+                                            className="p-1 text-primary hover:bg-primary/10 rounded"
+                                            title="Download Receipt"
+                                          >
+                                            <Printer size={12} />
+                                          </button>
+                                        )}
+                                        <button 
+                                          type="button"
+                                          onClick={() => {
+                                            closeModal();
+                                            navigate(`/payments?search=${viewingStudent.fullName}`);
+                                          }}
+                                          className="p-1 text-text-gray hover:text-white hover:bg-white/10 rounded transition-all"
+                                          title="Fix/Edit in Payments Page"
+                                        >
+                                          <Pencil size={12} />
+                                        </button>
+                                       </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                   </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                          <div className="space-y-3">
