@@ -35,13 +35,14 @@ export function Dashboard() {
       // Student Stats
       const activeCount = students.filter(s => s.status === 'active').length;
       
-      // Payment Stats
-      const monthlyRev = payments
-        .filter(p => p.status === 'paid' && p.date.toDate() >= startOfMo)
+      // Revenue Stats (Includes EVERYTHING paid: Tuition + Auxiliary)
+      const allPaidPayments = payments.filter(p => p.status === 'paid');
+
+      const monthlyRev = allPaidPayments
+        .filter(p => p.date.toDate() >= startOfMo)
         .reduce((acc, curr) => acc + (curr.amount || 0), 0);
         
-      const totalRev = payments
-        .filter(p => p.status === 'paid')
+      const totalRev = allPaidPayments
         .reduce((acc, curr) => acc + (curr.amount || 0), 0);
         
       const outstanding = students.reduce((acc, s) => acc + (Number(s.balance) || 0), 0);
@@ -67,14 +68,17 @@ export function Dashboard() {
         }
       });
       payments.forEach(p => {
-        activities.push({ type: 'payment', date: p.date.toDate(), msg: `Payment of GH₵${p.amount} recorded for ${sMap[p.studentId]?.name || 'Unknown Student'}` });
+        const catLabel = p.category ? ` (${p.category.replace('_', ' ')})` : '';
+        activities.push({ type: 'payment', date: p.date.toDate(), msg: `Payment of GH₵${p.amount}${catLabel} recorded for ${sMap[p.studentId]?.name || p.prospectiveName || 'Unknown Student'}` });
       });
       setRecentActivity(activities.sort((a,b) => b.date - a.date).slice(0, 8));
 
-      // Top Debtors
+      // Top Debtors (Tuition Ledger Only)
       const debtors = students.map(s => {
-        const paid = payments.filter(p => p.studentId === s.id && p.status === 'paid').reduce((a, c) => a + (c.amount || 0), 0);
-        return { ...s, balance: Math.max(0, (s.tuitionTotal || 0) - paid) };
+        const tuitionPaid = payments
+          .filter(p => p.studentId === s.id && p.status === 'paid' && (!p.category || p.category === 'tuition' || p.category === 'enrollment' || p.category === 'other'))
+          .reduce((a, c) => a + (c.amount || 0), 0);
+        return { ...s, balance: Math.max(0, (Number(s.tuitionTotal) || 0) - tuitionPaid) };
       }).filter(s => s.balance > 0).sort((a,b) => b.balance - a.balance).slice(0, 5);
       setTopDebtors(debtors);
 
@@ -193,15 +197,17 @@ export function Dashboard() {
                     <tr key={payment.id}>
                       <td className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg overflow-hidden surface-low shrink-0">
-                          {studentsMap[payment.studentId]?.photoUrl ? (
+                          {payment.studentId && studentsMap[payment.studentId]?.photoUrl ? (
                             <img src={studentsMap[payment.studentId]?.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-black text-xs">
-                              {studentsMap[payment.studentId]?.name?.charAt(0) || '?'}
+                              {payment.studentId ? (studentsMap[payment.studentId]?.name?.charAt(0) || '?') : (payment.prospectiveName?.charAt(0) || 'P')}
                             </div>
                           )}
                         </div>
-                        <span className="font-bold text-[var(--text-main)]">{studentsMap[payment.studentId]?.name || 'Unknown Student'}</span>
+                        <span className="font-bold text-[var(--text-main)]">
+                          {payment.studentId ? (studentsMap[payment.studentId]?.name || 'Unknown Student') : (payment.prospectiveName || 'Prospective Student')}
+                        </span>
                       </td>
                       <td className="font-mono text-[var(--text-main)]">GH₵ {payment.amount.toLocaleString()}</td>
                       <td className="text-text-gray italic">

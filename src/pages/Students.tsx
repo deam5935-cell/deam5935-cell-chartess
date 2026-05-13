@@ -77,12 +77,9 @@ const studentSchema = z.object({
   expectedCompletionDate: z.string().optional(),
   
   // FINANCIALS
-  registrationFee: z.coerce.number().min(0).default(0),
   tuitionFee: z.coerce.number().min(0).default(0),
   uniformFee: z.coerce.number().min(0).default(0),
   sewingKitsFee: z.coerce.number().min(0).default(0),
-  machineMaintenanceFee: z.coerce.number().min(0).default(0),
-  admissionFormFee: z.coerce.number().min(0).default(0),
   paymentPlan: z.enum(['Full Payment', 'Installments']).optional(),
   firstPaymentDate: z.string().optional(),
   secondPaymentDate: z.string().optional(),
@@ -174,12 +171,9 @@ export function Students() {
     defaultValues: { 
       status: 'active', 
       enrollmentDate: format(new Date(), 'yyyy-MM-dd'), 
-      registrationFee: 0,
       tuitionFee: 0,
       uniformFee: 500,
       sewingKitsFee: 250,
-      machineMaintenanceFee: 400,
-      admissionFormFee: 0,
       tuitionTotal: 0,
       amountPaid: 0,
       gender: 'Female',
@@ -198,11 +192,8 @@ export function Students() {
 
   const watchDOB = watch('dob');
   const watchTuitionFee = watch('tuitionFee', 0);
-  const watchRegFee = watch('registrationFee', 0);
   const watchUniformFee = watch('uniformFee', 0);
   const watchSewingKitsFee = watch('sewingKitsFee', 0);
-  const watchMaintenanceFee = watch('machineMaintenanceFee', 0);
-  const watchAdmissionFee = watch('admissionFormFee', 0);
   const watchPaid = watch('amountPaid', 0);
   const watchCourse = watch('course');
   const watchSurname = watch('surname', '');
@@ -229,19 +220,25 @@ export function Students() {
     }
   }, [watchDOB, setValue]);
 
+  const watchTuitionTotal = watch('tuitionTotal', 0);
+
   const tuitionTotalCalculated = 
     (Number(watchTuitionFee) || 0) + 
-    (Number(watchRegFee) || 0) + 
     (Number(watchUniformFee) || 0) + 
-    (Number(watchSewingKitsFee) || 0) + 
-    (Number(watchMaintenanceFee) || 0) + 
-    (Number(watchAdmissionFee) || 0);
-  const calculatedBalance = Math.max(0, tuitionTotalCalculated - (Number(watchPaid) || 0));
+    (Number(watchSewingKitsFee) || 0);
 
+  // Sync balance when total expected or paid changes
   useEffect(() => {
-    setValue('tuitionTotal', tuitionTotalCalculated);
-    setValue('balance', calculatedBalance);
-  }, [tuitionTotalCalculated, calculatedBalance, setValue]);
+    const calcBal = Math.max(0, (Number(watchTuitionTotal) || 0) - (Number(watchPaid) || 0));
+    setValue('balance', calcBal);
+  }, [watchTuitionTotal, watchPaid, setValue]);
+
+  // Sync tuitionTotal ONLY for new students when fees change
+  useEffect(() => {
+    if (!editingStudent) {
+      setValue('tuitionTotal', tuitionTotalCalculated);
+    }
+  }, [tuitionTotalCalculated, editingStudent, setValue]);
 
   useEffect(() => {
     const q = query(collection(db, 'students'), orderBy('fullName', 'asc'));
@@ -270,13 +267,13 @@ export function Students() {
     }
   }, [viewingStudent]);
 
-  const totalPaid = studentPayments
-    .filter(p => p.status === 'paid')
+  const coreTotalPaid = studentPayments
+    .filter(p => p.status === 'paid' && (!p.category || p.category === 'tuition' || p.category === 'enrollment' || p.category === 'other'))
     .reduce((acc, curr) => acc + (curr.amount || 0), 0);
   
-  const balance = (viewingStudent?.tuitionTotal || 0) - totalPaid;
+  const balance = (Number(viewingStudent?.tuitionTotal) || 0) - coreTotalPaid;
   const lastPayment = studentPayments.length > 0 
-    ? studentPayments.sort((a, b) => b.date.toDate() - a.date.toDate())[0]
+    ? [...studentPayments].sort((a, b) => (b.date?.toDate?.() || 0) - (a.date?.toDate?.() || 0))[0]
     : null;
 
   const uploadFile = async (file: File, path: string) => {
@@ -291,8 +288,8 @@ export function Students() {
 
       const timeout = setTimeout(() => {
         uploadTask.cancel();
-        reject(new Error('Upload timed out. This can happen if the image is too large or if Firebase Storage is not enabled/configured in your project.'));
-      }, 60000); // 60 second timeout
+        reject(new Error('Upload timed out. The file might be too large or your connection is slow. We cancelled the upload after 5 minutes.'));
+      }, 300000); // 5 minute timeout
 
       uploadTask.on('state_changed', 
         (snapshot) => {
@@ -303,11 +300,13 @@ export function Students() {
           clearTimeout(timeout);
           console.error('Firebase Storage Error:', error);
           
-          let message = 'Upload failed. ';
+          let message = 'Upload failed: ';
           if (error.code === 'storage/unauthorized') {
-            message += 'Please check your Storage Rules in Firebase Console.';
+            message += 'Authentication error. Your account may not have permission to upload files.';
           } else if (error.code === 'storage/retry-limit-exceeded') {
             message += 'Network error or Storage bucket not found.';
+          } else if (error.code === 'storage/canceled') {
+            message += 'Upload was cancelled (possibly due to timeout).';
           } else {
             message += error.message;
           }
@@ -517,12 +516,9 @@ export function Students() {
         idType: 'Ghana Card',
         tuitionTotal: 0,
         amountPaid: 0,
-        registrationFee: 0,
         tuitionFee: 0,
         uniformFee: 500,
         sewingKitsFee: 250,
-        machineMaintenanceFee: 400,
-        admissionFormFee: 0,
         hasStarterKit: 'No',
         starterKitFrenchCurves: false,
         starterKitSewingKits: false,
@@ -748,18 +744,32 @@ export function Students() {
                          <p className="text-xl font-black">GH₵ {(viewingStudent.tuitionTotal || 0).toLocaleString()}</p>
                        </div>
                        <div>
-                         <p className="text-[9px] text-text-gray/50 uppercase font-bold">Registration</p>
-                         <p className="text-lg font-black text-primary">GH₵ {(viewingStudent.registrationFee || 0).toLocaleString()}</p>
-                       </div>
-                       <div>
-                         <p className="text-[9px] text-text-gray/50 uppercase font-bold">Amount Paid</p>
-                         <p className="text-xl font-black text-emerald-400">GH₵ {(viewingStudent.amountPaid || totalPaid).toLocaleString()}</p>
+                         <p className="text-[9px] text-text-gray/50 uppercase font-bold">Amount Paid (Tuition)</p>
+                         <p className="text-xl font-black text-emerald-400">GH₵ {coreTotalPaid.toLocaleString()}</p>
                        </div>
                        <div className="pt-4 border-t border-white/5">
                          <p className="text-[9px] text-text-gray/50 uppercase font-bold">Balance Due</p>
-                         <p className={cn("text-2xl font-black", (viewingStudent.balance || balance) > 0 ? "text-rose-500" : "text-emerald-500")}>
-                           GH₵ {(viewingStudent.balance || balance).toLocaleString()}
+                         <p className={cn("text-2xl font-black", balance > 0 ? "text-rose-500" : "text-emerald-500")}>
+                           GH₵ {balance.toLocaleString()}
                          </p>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <p className="text-[10px] font-black text-text-gray uppercase tracking-widest mb-1">Fee Breakdown</p>
+                    <div className="space-y-2">
+                       <div className="flex justify-between text-[10px] uppercase font-bold text-text-gray">
+                          <span>Total Recorded</span>
+                          <span className="text-white">GH₵ {studentPayments.filter(p => p.status === 'paid').reduce((a,c) => a + (c.amount || 0), 0).toLocaleString()}</span>
+                       </div>
+                       <div className="flex justify-between text-[10px] uppercase font-bold text-text-gray">
+                          <span>Applied to Balance</span>
+                          <span className="text-emerald-400">GH₵ {coreTotalPaid.toLocaleString()}</span>
+                       </div>
+                       <div className="flex justify-between text-[10px] uppercase font-bold text-text-gray">
+                          <span>Auxiliary Payments</span>
+                          <span className="text-amber-400">GH₵ {studentPayments.filter(p => p.status === 'paid' && p.category && !['tuition', 'enrollment', 'other'].includes(p.category)).reduce((a,c) => a + (c.amount || 0), 0).toLocaleString()}</span>
                        </div>
                     </div>
                   </div>
@@ -1364,14 +1374,7 @@ export function Students() {
                       <Plus size={18} className="text-text-gray group-open:rotate-45 transition-transform" />
                     </summary>
                     <div className="p-6 pt-0 space-y-8 animate-in slide-in-from-top-4 duration-300">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
-                        <div className="space-y-2">
-                          <label className="field-label">Registration Fee</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
-                            <input type="number" {...register('registrationFee')} className="input-field pl-12 bg-bg-black" placeholder="0.00" />
-                          </div>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
                         <div className="space-y-2">
                           <label className="field-label">Tuition Base Fee</label>
                           <div className="relative">
@@ -1395,31 +1398,33 @@ export function Students() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5">
                         <div className="space-y-2">
-                          <label className="field-label">Machine Maintenance (6m)</label>
+                          <div className="flex justify-between items-center">
+                            <label className="field-label">Total Expected *</label>
+                            <button 
+                              type="button"
+                              onClick={() => setValue('tuitionTotal', tuitionTotalCalculated)}
+                              className="text-[9px] font-black text-primary uppercase hover:underline"
+                            >
+                              Reset to Calculated Sum
+                            </button>
+                          </div>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
-                            <input type="number" {...register('machineMaintenanceFee')} className="input-field pl-12 bg-bg-black" placeholder="400" />
+                            <input 
+                              type="number" 
+                              {...register('tuitionTotal')} 
+                              className="input-field pl-12 bg-primary/10 border-primary/20 text-primary text-xl font-black" 
+                              placeholder="0.00" 
+                            />
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="field-label">Admission Form</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-gray">GH₵</span>
-                            <input type="number" {...register('admissionFormFee')} className="input-field pl-12 bg-bg-black" placeholder="200" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="field-label">Total Expected</label>
-                          <div className="h-[46px] flex items-center px-4 bg-primary/5 rounded-lg border border-primary/20 font-black text-primary text-lg">
-                            GH₵ {tuitionTotalCalculated.toLocaleString()}
-                          </div>
+                          <p className="text-[9px] text-text-gray italic">Sum of Tuition, Uniform, and Sewing Kit: GH₵ {tuitionTotalCalculated.toLocaleString()}</p>
                         </div>
                         <div className="space-y-2">
                            <label className="field-label text-rose-400">Current Balance (Calculated)</label>
                            <div className="h-[46px] flex items-center px-4 bg-rose-500/5 rounded-lg border border-rose-500/20 font-black text-rose-400 text-lg">
-                             GH₵ {calculatedBalance.toLocaleString()}
+                             GH₵ {(Number(watchTuitionTotal) - Number(watchPaid)).toLocaleString()}
                            </div>
                            <p className="text-[9px] text-text-gray italic">Total Fees - Total Paid</p>
                         </div>
@@ -1632,9 +1637,9 @@ export function Students() {
                            </div>
                         </div>
                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
               <div className="p-8 bg-bg-black sticky bottom-0 z-50 border-t border-white/5 flex gap-4 backdrop-blur-xl bg-opacity-95">
                 <button type="button" onClick={closeModal} className="px-8 bg-white/5 hover:bg-white/10 text-text-gray hover:text-white font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5">

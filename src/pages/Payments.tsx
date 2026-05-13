@@ -9,16 +9,18 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { generateReceiptPDF } from '../lib/receipt';
+import { generateReceiptPDF, generateBlankAdmissionFormPDF } from '../lib/receipt';
 import { useNavigate } from 'react-router-dom';
 import { syncStudentBalance } from '../lib/finance';
 
 const paymentSchema = z.object({
-  studentId: z.string().min(1, 'Select a student'),
+  studentId: z.string().optional(),
+  prospectiveName: z.string().optional(),
   amount: z.coerce.number().min(1, 'Amount must be greater than 0'),
   date: z.string(),
   method: z.enum(['cash', 'transfer', 'other']),
   status: z.enum(['paid', 'pending']),
+  category: z.enum(['tuition', 'registration', 'enrollment', 'hostel', 'maintenance', 'graduation', 'admission_form', 'other']).default('tuition'),
   notes: z.string().optional()
 });
 
@@ -37,7 +39,12 @@ export function Payments() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
     resolver: zodResolver(paymentSchema),
-    defaultValues: { date: format(new Date(), 'yyyy-MM-dd'), method: 'transfer', status: 'paid' }
+    defaultValues: { 
+      date: format(new Date(), 'yyyy-MM-dd'), 
+      method: 'transfer', 
+      status: 'paid',
+      category: 'tuition'
+    }
   });
 
   useEffect(() => {
@@ -64,6 +71,10 @@ export function Payments() {
 
 
   const onSubmit = async (data: PaymentFormValues) => {
+    if (!data.studentId && !data.prospectiveName) {
+      return toast.error('Either select a student or provide a name for prospective student');
+    }
+    
     try {
       const payload = {
         ...data,
@@ -74,7 +85,7 @@ export function Payments() {
 
       if (isEditMode && editingPaymentId) {
         await updateDoc(doc(db, 'payments', editingPaymentId), payload);
-        await syncStudentBalance(data.studentId);
+        if (data.studentId) await syncStudentBalance(data.studentId);
         toast.success('Payment record updated');
       } else {
         const docRef = await addDoc(collection(db, 'payments'), {
@@ -82,12 +93,19 @@ export function Payments() {
           createdAt: serverTimestamp()
         });
 
-        const syncResult = await syncStudentBalance(data.studentId);
+        let balance;
+        if (data.studentId) {
+          const syncResult = await syncStudentBalance(data.studentId);
+          balance = syncResult?.balance;
+        }
 
         toast.success('Payment recorded successfully', {
           action: data.status === 'paid' ? {
-            label: 'Print Receipt',
-            onClick: () => handleDownloadReceipt({ ...payload, id: docRef.id }, syncResult?.balance)
+            label: data.category === 'admission_form' ? 'Print Form & Receipt' : 'Print Receipt',
+            onClick: () => {
+              handleDownloadReceipt({ ...payload, id: docRef.id }, balance);
+              if (data.category === 'admission_form') generateBlankAdmissionFormPDF();
+            }
           } : undefined
         });
       }
@@ -107,20 +125,22 @@ export function Payments() {
     setIsModalOpen(true);
     
     // Fill form
-    setValue('studentId', payment.studentId);
+    setValue('studentId', payment.studentId || '');
+    setValue('prospectiveName', payment.prospectiveName || '');
     setValue('amount', payment.amount);
     setValue('date', format(payment.date.toDate(), 'yyyy-MM-dd'));
     setValue('method', payment.method);
     setValue('status', payment.status);
+    setValue('category', payment.category || 'tuition');
     setValue('notes', payment.notes || '');
   };
 
-  const handleDelete = async (id: string, studentId: string) => {
+  const handleDelete = async (id: string, sId?: string) => {
     if (!isAdmin) return toast.error('Only admins can delete records');
     if (!window.confirm('Delete this payment record? This will automatically recalculate the student balance.')) return;
     try {
       await deleteDoc(doc(db, 'payments', id));
-      await syncStudentBalance(studentId);
+      if (sId) await syncStudentBalance(sId);
       toast.success('Payment deleted and balance updated');
     } catch (error: any) {
       handleFirestoreError(error, OperationType.DELETE, `payments/${id}`);
@@ -128,24 +148,36 @@ export function Payments() {
   };
 
   const handleDownloadReceipt = async (payment: any, overrideBalance?: number) => {
-    const student = students.find(s => s.id === payment.studentId);
-    if (!student) return toast.error('Student data not found');
+    let studentName = payment.prospectiveName;
+    let studentCourse = 'Prospective Student';
+    let tuitionTotal = 0;
+    let studentTotalPaid = payment.amount;
 
-    // Robust calculation of total paid so far for this student
-    const studentTotalPaid = payments
-      .filter(p => p.studentId === payment.studentId && p.status === 'paid')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    if (payment.studentId) {
+      const student = students.find(s => s.id === payment.studentId);
+      if (student) {
+        studentName = student.fullName;
+        studentCourse = student.course || 'Fashion Design';
+        tuitionTotal = Number(student.tuitionTotal) || 0;
+        
+        // Robust calculation of total paid so far for this student (Tuition Ledger Only)
+        studentTotalPaid = payments
+          .filter(p => p.studentId === payment.studentId && p.status === 'paid' && (!p.category || p.category === 'tuition' || p.category === 'enrollment' || p.category === 'other'))
+          .reduce((sum, p) => sum + (p.amount || 0), 0);
+      }
+    }
 
-    const tuitionTotal = (Number(student.tuitionTotal) || 0);
+    if (!studentName) return toast.error('Payer name not found');
 
     const toastId = toast.loading('Generating receipt...');
     try {
       await generateReceiptPDF({
         receiptNo: payment.id.substring(0, 8).toUpperCase(),
-        studentName: student.fullName,
-        studentCourse: student.course || 'Fashion Design',
+        studentName: studentName,
+        studentCourse: studentCourse,
         amount: payment.amount,
-        balance: overrideBalance !== undefined ? overrideBalance : Math.max(0, tuitionTotal - studentTotalPaid),
+        category: payment.category,
+        balance: overrideBalance !== undefined ? overrideBalance : (tuitionTotal ? Math.max(0, tuitionTotal - studentTotalPaid) : 0),
         tuitionTotal: tuitionTotal,
         totalPaid: studentTotalPaid,
         date: payment.date instanceof Date ? payment.date : payment.date.toDate(),
@@ -160,12 +192,15 @@ export function Payments() {
     }
   };
 
-  const getStudentName = (id: string) => {
-    return students.find(s => s.id === id)?.fullName || 'Unknown Student';
+  const getPayerName = (p: any) => {
+    if (p.studentId) {
+      return students.find(s => s.id === p.studentId)?.fullName || 'Unknown Student';
+    }
+    return p.prospectiveName || 'Guest';
   };
 
   const filteredPayments = payments.filter(p => 
-    getStudentName(p.studentId).toLowerCase().includes(searchTerm.toLowerCase())
+    getPayerName(p).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -200,6 +235,7 @@ export function Payments() {
             <thead>
               <tr>
                 <th>Student</th>
+                <th>Category</th>
                 <th>Amount</th>
                 <th>Method</th>
                 <th>Date</th>
@@ -217,15 +253,31 @@ export function Payments() {
                   <tr key={payment.id} className="group">
                     <td>
                       <div className="flex flex-col">
-                        <button 
-                          onClick={() => navigate(`/students?id=${payment.studentId}`)}
-                          className="text-left font-bold hover:text-primary transition-colors cursor-pointer"
-                        >
-                          {getStudentName(payment.studentId)}
-                        </button>
-                        <p className="text-[10px] text-primary/70 font-mono tracking-tight uppercase">ID: {payment.studentId.substring(0, 8)}</p>
+                        {payment.studentId ? (
+                          <button 
+                            onClick={() => navigate(`/students?id=${payment.studentId}`)}
+                            className="text-left font-bold hover:text-primary transition-colors cursor-pointer"
+                          >
+                            {getPayerName(payment)}
+                          </button>
+                        ) : (
+                          <span className="font-bold text-amber-400">{getPayerName(payment)} (Prospective)</span>
+                        )}
+                        <p className="text-[10px] text-primary/70 font-mono tracking-tight uppercase">
+                          ID: {payment.studentId ? payment.studentId.substring(0, 8) : 'GUEST-SALE'}
+                        </p>
                       </div>
                       <p className="text-[10px] text-text-gray mt-1">{payment.notes || 'No notes'}</p>
+                    </td>
+                    <td>
+                      <span className={cn(
+                        "text-[9px] font-black uppercase px-2 py-0.5 rounded border tracking-widest",
+                        ['maintenance', 'hostel', 'graduation', 'admission_form', 'registration'].includes(payment.category)
+                          ? "bg-purple-500/10 text-purple-400 border-purple-500/20" 
+                          : "bg-primary/10 text-primary border-primary/20"
+                      )}>
+                        {payment.category?.replace('_', ' ') || 'tuition'}
+                      </span>
                     </td>
                     <td className="font-mono font-bold text-white">
                       GH₵ {payment.amount?.toLocaleString()}
@@ -253,14 +305,26 @@ export function Payments() {
                     <td className="text-right">
                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          {payment.status === 'paid' && (
-                           <button 
-                             onClick={() => handleDownloadReceipt(payment)} 
-                             className="px-3 py-1.5 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-emerald-500/20"
-                             title="Print Receipt"
-                           >
-                              <Printer size={14} />
-                              Receipt
-                           </button>
+                           <>
+                             <button 
+                               onClick={() => handleDownloadReceipt(payment)} 
+                               className="px-3 py-1.5 flex items-center gap-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-emerald-500/20"
+                               title="Print Receipt"
+                             >
+                                <Printer size={14} />
+                                Receipt
+                             </button>
+                             {payment.category === 'admission_form' && (
+                               <button 
+                                 onClick={() => generateBlankAdmissionFormPDF()} 
+                                 className="px-3 py-1.5 flex items-center gap-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-blue-500/20"
+                                 title="Print Blank Form"
+                               >
+                                  <FileText size={14} />
+                                  Form
+                               </button>
+                             )}
+                           </>
                          )}
                          <button onClick={() => handleEdit(payment)} className="p-2 text-primary/70 hover:text-primary rounded-md transition-all">
                             <Pencil size={16} />
@@ -295,33 +359,55 @@ export function Payments() {
             </div>
             
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Student</label>
-                <div className="relative">
-                  <select {...register('studentId')} className="input-field appearance-none bg-bg-dark pr-10">
-                    <option value="">Select a student...</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>{s.fullName} - ID: {s.id.substring(0, 8).toUpperCase()} ({s.course})</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Student (Existing)</label>
+                  <div className="relative">
+                    <select {...register('studentId')} className="input-field appearance-none bg-bg-dark pr-10">
+                      <option value="">Select a student...</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>{s.fullName}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                  </div>
                 </div>
-                {errors.studentId && <p className="text-rose-500 text-[10px] uppercase font-bold">{errors.studentId.message}</p>}
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Full Name (Prospective)</label>
+                  <input {...register('prospectiveName')} className="input-field" placeholder="If not yet enrolled student" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Category</label>
+                  <select {...register('category')} className="input-field bg-bg-dark">
+                    <option value="tuition">Tuition Fee</option>
+                    <option value="admission_form">Admission Form Sale</option>
+                    <option value="registration">Registration Fee</option>
+                    <option value="enrollment">Enrollment/Admission</option>
+                    <option value="hostel">Hostel Fee (Recurring)</option>
+                    <option value="maintenance">Maintenance (Recurring)</option>
+                    <option value="graduation">Graduation Fee</option>
+                    <option value="other">Other Fees</option>
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Amount (GH₵)</label>
-                  <input type="number" {...register('amount')} className="input-field" placeholder="0.00" />
+                  <input type="number" {...register('amount')} className="input-field font-bold text-primary" placeholder="0.00" />
                   {errors.amount && <p className="text-rose-500 text-[10px] uppercase font-bold">{errors.amount.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Date</label>
-                  <input type="date" {...register('date')} className="input-field" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</label>
+                   <select {...register('status')} className="input-field bg-bg-dark">
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                   </select>
+                </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Method</label>
                    <select {...register('method')} className="input-field bg-bg-dark">
@@ -330,13 +416,11 @@ export function Payments() {
                       <option value="other">Other</option>
                    </select>
                 </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</label>
-                   <select {...register('status')} className="input-field bg-bg-dark">
-                      <option value="paid">Paid</option>
-                      <option value="pending">Pending</option>
-                   </select>
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Date</label>
+                <input type="date" {...register('date')} className="input-field" />
               </div>
 
               <div className="space-y-2">

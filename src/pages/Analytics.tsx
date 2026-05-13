@@ -9,8 +9,10 @@ import { TrendingUp, DollarSign, Users, Award, AlertTriangle, FileDown, Calendar
 import { format, subDays, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
 export function Analytics() {
+  const { isAdmin } = useAuth();
   const [payments, setPayments] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,19 @@ export function Analytics() {
     { name: 'Other', value: payments.filter(p => p.method === 'other').length },
   ];
 
-  const COLORS = ['#1CA3B8', '#10B981', '#F59E0B'];
+  const COLORS = ['#1CA3B8', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6', '#F43F5E', '#14B8A6'];
+
+  // Chart Data: Revenue by Category
+  const categoryData = [
+    { name: 'Tuition', value: payments.filter(p => p.status === 'paid' && (!p.category || p.category === 'tuition')).reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Enrollment', value: payments.filter(p => p.status === 'paid' && p.category === 'enrollment').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Admission Form', value: payments.filter(p => p.status === 'paid' && p.category === 'admission_form').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Registration', value: payments.filter(p => p.status === 'paid' && p.category === 'registration').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Hostel', value: payments.filter(p => p.status === 'paid' && p.category === 'hostel').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Maintenance', value: payments.filter(p => p.status === 'paid' && p.category === 'maintenance').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Graduation', value: payments.filter(p => p.status === 'paid' && p.category === 'graduation').reduce((acc, p) => acc + p.amount, 0) },
+    { name: 'Other', value: payments.filter(p => p.status === 'paid' && p.category === 'other').reduce((acc, p) => acc + p.amount, 0) },
+  ].filter(c => c.value > 0);
 
   const outstandingList = payments
     .filter(p => p.status === 'pending')
@@ -156,6 +170,16 @@ export function Analytics() {
   };
 
   if (loading) return <div>Loading...</div>;
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+         <AlertTriangle size={64} className="text-amber-500 mb-4" animate-bounce />
+         <h2 className="text-2xl font-bold uppercase tracking-tighter">Access Restricted</h2>
+         <p className="text-gray-500 max-w-md mx-auto">This financial analytics dashboard is reserved for administrative accounts only. Please contact a system administrator if you believe this is an error.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -275,6 +299,42 @@ export function Analytics() {
                 <Bar dataKey="revenue" fill="#1CA3B8" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="glass-card p-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-primary">Revenue by Category (Auxiliary tracking)</h3>
+          <div className="h-[240px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                   contentStyle={{ backgroundColor: '#121826', borderRadius: '12px', border: '1px solid #1E293B', fontSize: '12px' }}
+                   formatter={(value: number) => `GH₵ ${value.toLocaleString()}`}
+                />
+                <Legend iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+             {categoryData.map((cat, idx) => (
+                <div key={idx} className="flex flex-col">
+                   <span className="text-[10px] text-text-gray font-bold uppercase">{cat.name}</span>
+                   <span className="text-sm font-black">GH₵ {cat.value.toLocaleString()}</span>
+                </div>
+             ))}
           </div>
         </div>
 

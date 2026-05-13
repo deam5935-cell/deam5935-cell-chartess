@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { updateDoc } from 'firebase/firestore';
+import { ADMIN_EMAILS } from '../lib/constants';
 
 interface AuthContextType {
   user: User | null;
@@ -36,7 +38,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         unsubDoc = onSnapshot(doc(db, 'users', user.uid), (userDoc) => {
           if (userDoc.exists()) {
-            setUserRole(userDoc.data().role);
+            const data = userDoc.data();
+            setUserRole(data.role);
+            
+            // Auto-promote if in ADMIN_EMAILS but listed as staff
+            const emailLower = user.email?.toLowerCase();
+            if (emailLower && ADMIN_EMAILS.includes(emailLower) && data.role !== 'admin') {
+              updateDoc(userDoc.ref, { role: 'admin' }).catch(console.error);
+            }
           } else {
             setUserRole(null);
           }
@@ -59,9 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isAdmin = userRole === 'admin' || (
-    user?.email?.toLowerCase() === 'marufadam7777@gmail.com' || 
-    user?.email?.toLowerCase() === 'beisiwaa00@gmail.com' ||
-    user?.email?.toLowerCase() === 'r9628606@gmail.com'
+    !!user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
   );
 
   return (

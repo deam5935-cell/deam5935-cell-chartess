@@ -6,9 +6,13 @@ service firebase.storage {
       // This is often needed for public profile photos and portfolios
       allow read: if true;
       
-      // Allow write access only to authenticated users
-      // In a more restricted app, you would check if they are "Staff"
-      allow write: if request.auth != null;
+      // Allow write access only to authenticated users who are verified or are initial admins
+      allow write: if request.auth != null && (
+        request.auth.token.email_verified == true || 
+        request.auth.token.email.lower() == 'marufadam7777@gmail.com' ||
+        request.auth.token.email.lower() == 'beisiwaa00@gmail.com' ||
+        request.auth.token.email.lower() == 'r9628606@gmail.com'
+      );
     }
   }
 }

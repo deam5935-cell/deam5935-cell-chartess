@@ -12,6 +12,7 @@ interface ReceiptData {
   totalPaid?: number;
   date: Date;
   method: string;
+  category?: string;
   notes?: string;
   recordedBy?: string;
 }
@@ -48,7 +49,7 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
 
   receiptContainer.innerHTML = `
     <div style="border: 4px solid #0A0F1C; padding: 30px; position: relative; overflow: hidden;">
-      <img src="${logoUrl}" crossOrigin="anonymous" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; opacity: 0.05; pointer-events: none;" />
+      <img src="${logoUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; opacity: 0.05; pointer-events: none;" />
       
       ${headerHtml}
 
@@ -82,7 +83,7 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
         </div>
         <div style="display: grid; grid-template-columns: 150px 1fr; gap: 15px; margin-bottom: 10px;">
           <div style="font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px;">Being Payment For:</div>
-          <div style="font-size: 16px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">${data.notes || 'School Academic & Practical Fees'}</div>
+          <div style="font-size: 16px; border-bottom: 1px dashed #eee; padding-bottom: 5px; text-transform: capitalize;">${data.category || 'Tuition Fee'} ${data.notes ? `- ${data.notes}` : ''}</div>
         </div>
         <div style="display: grid; grid-template-columns: 150px 1fr; gap: 15px; margin-bottom: 10px;">
           <div style="font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px;">Payment Method:</div>
@@ -427,10 +428,6 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
             <h3 style="border-left: 5px solid #0A0F1C; padding-left: 10px; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; font-weight: 900; color: #0A0F1C; background: #f8fafc; padding-top: 5px; padding-bottom: 5px;">Financial Settlement</h3>
             <div style="background: #f1f5f9; padding: 20px; border-radius: 15px; border: 2px solid #e2e8f0; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #64748b; font-weight: bold;">Admission Fee:</span>
-                <span style="font-weight: 900;">GH₵ ${(student.registrationFee || 0).toLocaleString()}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #64748b; font-weight: bold;">Tuition Billing:</span>
                 <span style="font-weight: 900;">GH₵ ${(student.tuitionFee || 0).toLocaleString()}</span>
               </div>
@@ -507,5 +504,131 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
     pdf.save(`Enrollment_Form_${student.fullName.replace(/ /g, '_')}.pdf`);
   } finally {
     document.body.removeChild(receiptContainer);
+  }
+};
+
+export const generateBlankAdmissionFormPDF = async () => {
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.left = '-10000px';
+  container.style.top = '0';
+  container.style.width = '1000px';
+  container.style.padding = '50px';
+  container.style.backgroundColor = '#ffffff';
+  container.style.color = '#000000';
+  container.style.fontFamily = "'Inter', sans-serif";
+  
+  const logoUrl = "/charthess_logo-1.png";
+
+  const headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <div style="flex-shrink: 0;">
+        <img src="${logoUrl}" style="height: 70px; width: auto; object-fit: contain;" />
+      </div>
+      <div style="flex-grow: 1; padding-left: 30px; text-align: right;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #000;">CHARTHESS SCHOOL OF FASHION</h1>
+        <div style="margin-top: 5px; font-size: 11px; color: #333; line-height: 1.4; text-align: right;">
+          <p style="margin: 0;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
+          <p style="margin: 0;">Email: charthessfashions@gmail.com</p>
+          <p style="margin: 0;">Location: Kasoa Nyanyano Road, Kakraba Behind KFC</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const fieldRow = (label: string) => `
+    <div style="margin-bottom: 15px; display: flex; align-items: end; gap: 10px;">
+      <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666; width: 140px; flex-shrink: 0;">${label}:</span>
+      <div style="flex-grow: 1; border-bottom: 1px solid #ccc; height: 20px;"></div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div style="border: 2px solid #000; padding: 40px; background: #fff;">
+      ${headerHtml}
+      
+      <div style="text-align: center; margin: 20px 0 30px 0;">
+        <h2 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; text-decoration: underline;">ADMISSION FORM</h2>
+        <p style="margin: 5px 0 0 0; font-weight: bold; color: #1CA3B8;">SESSION: 20______ / 20______</p>
+      </div>
+
+      <div style="display: flex; gap: 40px; margin-bottom: 40px;">
+         <div style="width: 140px; height: 160px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; text-transform: uppercase; text-align: center;">
+            Affix Passport<br/>Photograph Here
+         </div>
+         <div style="flex: 1;">
+            ${fieldRow('Surname')}
+            ${fieldRow('First Name')}
+            ${fieldRow('Other Names')}
+            ${fieldRow('Program / Course')}
+         </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+         <div>
+            <h3 style="font-size: 14px; font-weight: 900; border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">A. PERSONAL PARTICULARS</h3>
+            ${fieldRow('Date of Birth')}
+            ${fieldRow('Gender')}
+            ${fieldRow('Nationality')}
+            ${fieldRow('Marital Status')}
+            ${fieldRow('Religion')}
+            ${fieldRow('Residential Address')}
+            ${fieldRow('Digital Address')}
+            ${fieldRow('Contact Number')}
+            ${fieldRow('WhatsApp Number')}
+            ${fieldRow('Email Address')}
+         </div>
+         <div>
+            <h3 style="font-size: 14px; font-weight: 900; border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">B. GUARDIAN / NEXT OF KIN</h3>
+            ${fieldRow('Guardian Name')}
+            ${fieldRow('Relationship')}
+            ${fieldRow('Guardian occupation')}
+            ${fieldRow('Guardian Phone 1')}
+            ${fieldRow('Guardian Phone 2')}
+            <h3 style="font-size: 14px; font-weight: 900; border-bottom: 2px solid #000; margin-top: 25px; margin-bottom: 15px; padding-bottom: 5px;">C. EDUCATION</h3>
+            ${fieldRow('Last School Attended')}
+            ${fieldRow('Highest Qualification')}
+            ${fieldRow('Year Completed')}
+         </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+         <h3 style="font-size: 14px; font-weight: 900; border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">D. HEALTH INFORMATION</h3>
+         <p style="font-size: 11px; color: #444; margin-bottom: 10px;">Do you have any medical condition? Yes [ ] No [ ]. If yes, state briefly below:</p>
+         <div style="border-bottom: 1px solid #ccc; height: 30px; margin-bottom: 10px;"></div>
+         <div style="border-bottom: 1px solid #ccc; height: 30px;"></div>
+      </div>
+
+      <div style="margin-top: 40px; border: 1px solid #000; padding: 20px;">
+         <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 900;">DECLARATION</h3>
+         <p style="margin: 0; font-size: 12px; line-height: 1.6; font-style: italic;">
+            I certify that the information given on this form is true and correct. I agree to abide by the rules and regulations of Charthess School of Fashion.
+         </p>
+         <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+            <div style="width: 200px; border-top: 1px solid #000; text-align: center; font-size: 10px; font-weight: bold; padding-top: 5px;">APPLICANT SIGNATURE</div>
+            <div style="width: 200px; border-top: 1px solid #000; text-align: center; font-size: 10px; font-weight: bold; padding-top: 5px;">DATE</div>
+         </div>
+      </div>
+
+      <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666; font-weight: bold; letter-spacing: 2px;">
+         BRINGING OUT THE CREATIVE YOU
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(container);
+  try {
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.autoPrint();
+    const blobUrl = pdf.output('bloburl');
+    window.open(blobUrl, '_blank');
+    pdf.save(`Admission_Form_Blank.pdf`);
+  } finally {
+    document.body.removeChild(container);
   }
 };
