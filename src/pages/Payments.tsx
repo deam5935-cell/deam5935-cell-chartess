@@ -56,10 +56,23 @@ export function Payments() {
       handleFirestoreError(error, OperationType.GET, 'students');
     });
 
-    // Real-time payments
-    const q = query(collection(db, 'payments'), orderBy('date', 'desc'));
+    // Real-time payments - query without orderBy to avoid index requirements in dev
+    const q = query(collection(db, 'payments'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPayments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort locally by date desc - robust version
+      paymentsList.sort((a: any, b: any) => {
+        const getTs = (d: any) => {
+          if (!d) return 0;
+          if (typeof d.toDate === 'function') return d.toDate().getTime();
+          if (d instanceof Date) return d.getTime();
+          if (typeof d === 'string') return new Date(d).getTime();
+          if (d.seconds) return d.seconds * 1000;
+          return 0;
+        };
+        return getTs(b.date) - getTs(a.date);
+      });
+      setPayments(paymentsList);
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'payments');
@@ -129,7 +142,7 @@ export function Payments() {
     setValue('studentId', payment.studentId || '');
     setValue('prospectiveName', payment.prospectiveName || '');
     setValue('amount', payment.amount);
-    setValue('date', format(payment.date.toDate(), 'yyyy-MM-dd'));
+    setValue('date', payment.date?.toDate ? format(payment.date.toDate(), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
     setValue('method', payment.method);
     setValue('status', payment.status);
     setValue('category', payment.category || 'tuition');
@@ -172,6 +185,15 @@ export function Payments() {
 
     const toastId = toast.loading('Generating receipt...');
     try {
+      let paymentDate: Date;
+      if (payment.date instanceof Date) {
+        paymentDate = payment.date;
+      } else if (payment.date?.toDate) {
+        paymentDate = payment.date.toDate();
+      } else {
+        paymentDate = new Date();
+      }
+
       await generateReceiptPDF({
         receiptNo: payment.id.substring(0, 8).toUpperCase(),
         studentName: studentName,
@@ -181,10 +203,10 @@ export function Payments() {
         balance: overrideBalance !== undefined ? overrideBalance : (tuitionTotal ? Math.max(0, tuitionTotal - studentTotalPaid) : 0),
         tuitionTotal: tuitionTotal,
         totalPaid: studentTotalPaid,
-        date: payment.date instanceof Date ? payment.date : payment.date.toDate(),
+        date: paymentDate,
         method: payment.method,
         notes: payment.notes,
-        recordedBy: user?.displayName || 'Staff'
+        recordedBy: user?.displayName || (isAdmin ? 'Administrator' : 'Staff')
       });
       toast.success('Receipt generated successfully', { id: toastId });
     } catch (error) {
@@ -298,7 +320,7 @@ export function Payments() {
                       </span>
                     </td>
                     <td className="text-xs italic text-text-gray">
-                      {format(payment.date.toDate(), 'PPP')}
+                      {payment.date?.toDate ? format(payment.date.toDate(), 'PPP') : 'Invalid Date'}
                     </td>
                     <td className="text-center">
                        <div className="flex justify-center">
@@ -312,7 +334,7 @@ export function Payments() {
                        </div>
                     </td>
                     <td className="text-right">
-                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <div className="flex justify-end gap-2">
                          {payment.status === 'paid' && (
                            <>
                              <button 

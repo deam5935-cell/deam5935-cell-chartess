@@ -23,7 +23,18 @@ export function Analytics() {
 
   useEffect(() => {
     const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
-      setPayments(snap.docs.map(doc => ({ id: doc.id, ...doc.data(), date: doc.data().date.toDate() })));
+      setPayments(snap.docs.map(doc => {
+        const data = doc.data();
+        const parseDate = (d: any) => {
+          if (!d) return new Date();
+          if (typeof d.toDate === 'function') return d.toDate();
+          if (d instanceof Date) return d;
+          if (typeof d === 'string') return new Date(d);
+          if (d.seconds) return new Date(d.seconds * 1000);
+          return new Date();
+        };
+        return { id: doc.id, ...data, date: parseDate(data.date) };
+      }));
     });
     const unsubStudents = onSnapshot(collection(db, 'students'), (snap) => {
       setStudents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
