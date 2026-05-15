@@ -1,15 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, onSnapshot, getDocs, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Users, CreditCard, DollarSign, Activity, Plus, TrendingUp, ShieldAlert } from 'lucide-react';
+import { Users, CreditCard, DollarSign, Activity, Plus, TrendingUp, ShieldAlert, Settings, X, Loader2 } from 'lucide-react';
+import { Logo } from '../components/ui/Logo';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
+import { storage } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { toast } from 'sonner';
 
 export function Dashboard() {
   const { isAdmin, userRole } = useAuth();
+  const { settings, updateSettings } = useSettings();
   const isStaffValue = isAdmin || userRole === 'staff';
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo image too large. Max 2MB.');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    const toastId = toast.loading('Uploading new logo...');
+    try {
+      const fileRef = ref(storage, `system/logo_${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      await updateSettings({ logoUrl: url });
+      toast.success('Logo updated successfully!', { id: toastId });
+    } catch (error: any) {
+      console.error('Logo upload error:', error);
+      toast.error('Failed to upload logo: ' + (error.message || 'Check permissions'), { id: toastId });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -128,11 +161,20 @@ export function Dashboard() {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-6">
            <div className="leading-tight border-l-4 border-primary pl-4 py-1">
-             <h2 className="text-3xl font-black tracking-tight uppercase text-white">Charthess</h2>
-             <p className="text-primary font-bold uppercase tracking-[0.4em] text-[10px]">School of Fashion</p>
+             <h2 className="text-3xl font-black tracking-tight uppercase text-white">{settings.schoolName}</h2>
+             <p className="text-primary font-bold uppercase tracking-[0.4em] text-[10px]">{settings.motto}</p>
            </div>
         </div>
         <div className="flex gap-4">
+          {isAdmin && (
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="bg-bg-dark hover:bg-white/5 text-[var(--text-main)] px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 border border-border"
+            >
+              <Settings size={18} />
+              <span>System Settings</span>
+            </button>
+          )}
           <Link to="/students" className="btn-primary">
             <Plus size={18} />
             <span>Add Student</span>
@@ -309,6 +351,88 @@ export function Dashboard() {
            </div>
         </div>
       </div>
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="glass-card w-full max-w-lg p-8 space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center border-b border-border pb-6">
+              <div>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">System Settings</h3>
+                <p className="text-text-gray text-xs font-bold uppercase tracking-widest mt-1">Configure global application assets</p>
+              </div>
+              <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-white/5 rounded-lg text-text-gray"><X size={20} /></button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Logo Management */}
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest text-primary">Institution Logo</label>
+                <div className="flex items-center gap-6 p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div className="w-40 h-40 rounded-lg overflow-hidden bg-bg-black flex items-center justify-center p-2 border border-border relative group shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                    <Logo src={settings.logoUrl} alt="Current Logo" className="max-w-full max-h-full object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" />
+                    {isUploadingLogo && (
+                      <div className="absolute inset-0 bg-bg-black/80 flex items-center justify-center">
+                        <Loader2 className="animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <p className="text-[10px] text-text-gray leading-relaxed">
+                      Upload a high-resolution PNG or JPG logo. Recommended size: 500x500px or larger.
+                    </p>
+                    <input 
+                      type="file" 
+                      id="logo-upload" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleLogoUpload} 
+                      disabled={isUploadingLogo}
+                    />
+                    <button 
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                      disabled={isUploadingLogo}
+                      className="text-xs font-black uppercase px-4 py-2 bg-primary text-bg-black rounded focus:ring-2 ring-primary/50 disabled:opacity-50"
+                    >
+                      Change Logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* School Names */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-text-gray">Institution Name</label>
+                  <input 
+                    type="text" 
+                    value={settings.schoolName}
+                    onChange={(e) => updateSettings({ schoolName: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-text-gray">Slogan / Motto</label>
+                  <input 
+                    type="text" 
+                    value={settings.motto}
+                    onChange={(e) => updateSettings({ motto: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border flex justify-end">
+              <button 
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-6 py-2 bg-bg-dark hover:bg-white/5 text-white font-bold text-xs uppercase tracking-widest rounded transition-all"
+              >
+                Close Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

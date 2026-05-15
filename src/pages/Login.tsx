@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { ADMIN_EMAILS } from '../lib/constants';
 import { toast } from 'sonner';
 import { User as UserIcon, Lock, Loader2, LogIn } from 'lucide-react';
+import { Logo } from '../components/ui/Logo';
+import { useSettings } from '../context/SettingsContext';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -13,6 +15,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const { settings } = useSettings();
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
@@ -115,12 +118,24 @@ export function Login() {
       await postLoginSequencing(credential.user);
     } catch (error: any) {
       console.error('Login error:', error);
+      console.log('Error Code:', error.code);
+      console.log('Error Message:', error.message);
       
       let message = 'Failed to login. Please try again.';
-      if (error.code === 'auth/invalid-credential') {
-        message = 'Incorrect email or password. If you haven\'t set a password yet, try signing in with Google with your registered email.';
+      const invalidCredCodes = [
+        'auth/invalid-credential',
+        'auth/user-not-found',
+        'auth/wrong-password',
+        'auth/invalid-email',
+        'auth/user-disabled'
+      ];
+
+      if (invalidCredCodes.includes(error.code)) {
+        message = 'Incorrect email or password. If you haven\'t set a password yet, please use "Sign in with Google" with your registered email.';
       } else if (error.code === 'auth/too-many-requests') {
-        message = 'Too many failed login attempts. Please try again later.';
+        message = 'Too many failed login attempts. Please try again later or reset your password.';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = 'Login popup was closed. Please try again.';
       } else if (error.message) {
         message = error.message;
       }
@@ -138,11 +153,10 @@ export function Login() {
         <div className="absolute inset-0 bg-bg-black" />
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="opacity-[0.05] blur-[1px] w-[600px] h-[600px] md:w-[800px] md:h-[800px]">
-            <img 
-              src="/charthess_logo-1.png" 
+            <Logo 
+              src={settings.logoUrl} 
               alt="" 
               className="w-full h-full object-contain grayscale"
-              referrerPolicy="no-referrer"
             />
           </div>
         </div>
@@ -156,11 +170,10 @@ export function Login() {
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="flex flex-col items-center pt-10 text-center">
           <div className="mb-8">
-             <img 
-              src="/charthess_logo-1.png" 
-              alt="Charthess School of Fashion Logo" 
-              className="w-[280px] h-auto drop-shadow-[0_0_40px_rgba(28,163,184,0.3)] transition-all animate-in fade-in zoom-in-95"
-              referrerPolicy="no-referrer"
+             <Logo 
+              src={settings.logoUrl} 
+              alt={`${settings.schoolName} Logo`} 
+              className="w-[420px] h-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all animate-in fade-in zoom-in-95"
             />
           </div>
         </div>

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { generateEnrollmentPDF, generateInvoicePDF, generateReceiptPDF } from '../lib/receipt';
 import { syncStudentBalance } from '../lib/finance';
+import { useSettings } from '../context/SettingsContext';
 
 const studentSchema = z.object({
   // CORE FIELDS (For compatibility)
@@ -109,6 +110,7 @@ type StudentFormValues = z.infer<typeof studentSchema>;
 
 export function Students() {
   const { isAdmin, userRole } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isStaffValue = isAdmin || userRole === 'staff';
@@ -116,7 +118,16 @@ export function Students() {
   const handlePrintEnrollment = async (student: any) => {
     try {
       toast.loading('Preparing enrollment document...');
-      await generateEnrollmentPDF({ student });
+      await generateEnrollmentPDF({ 
+        student,
+        schoolInfo: {
+          name: settings.schoolName,
+          tagline: settings.motto,
+          address: 'Kasoa Nyanyano Road, Kakraba Behind KFC',
+          phone: '+233 24 786 4347 / +233 50 083 0085',
+          logoUrl: settings.logoUrl
+        }
+      });
       toast.dismiss();
       toast.success('Enrollment form downloaded');
     } catch (error) {
@@ -128,7 +139,7 @@ export function Students() {
   const handlePrintInvoice = async (student: any) => {
     try {
       toast.loading('Generating invoice...');
-      await generateInvoicePDF(student);
+      await generateInvoicePDF(student, settings.logoUrl);
       toast.dismiss();
       toast.success('Invoice downloaded');
     } catch (error) {
@@ -291,7 +302,8 @@ export function Students() {
       method: payment.method || 'Cash',
       category: payment.category || 'tuition',
       notes: payment.notes,
-      recordedBy: payment.recordedBy
+      recordedBy: payment.recordedBy,
+      logoUrl: settings.logoUrl
     });
   };
 

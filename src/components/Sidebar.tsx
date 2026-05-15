@@ -4,11 +4,14 @@ import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSettings } from '../context/SettingsContext';
+import { Logo } from './ui/Logo';
 import { cn } from '../lib/utils';
 
 export function Sidebar() {
   const { userRole, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -32,12 +35,10 @@ export function Sidebar() {
     <aside className="w-[240px] bg-bg-black border-r border-border flex flex-col h-screen sticky top-0">
       <div className="pt-12 pb-8 px-6 flex flex-col gap-4">
         <div className="flex items-center justify-center">
-          <img 
-            src="/charthess_logo-1.png" 
-            alt="Charthess Logo" 
-            className="h-[85px] w-auto object-contain drop-shadow-[0_0_20px_rgba(28,163,184,0.5)]"
-            referrerPolicy="no-referrer"
-            loading="eager"
+          <Logo 
+            src={settings.logoUrl} 
+            alt={`${settings.schoolName} Logo`} 
+            className="h-[180px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
           />
         </div>
       </div>

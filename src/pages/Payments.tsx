@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { generateReceiptPDF, generateBlankAdmissionFormPDF } from '../lib/receipt';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { syncStudentBalance } from '../lib/finance';
+import { useSettings } from '../context/SettingsContext';
 
 const paymentSchema = z.object({
   studentId: z.string().optional(),
@@ -28,6 +29,7 @@ type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 export function Payments() {
   const { isAdmin, user } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [payments, setPayments] = useState<any[]>([]);
@@ -118,7 +120,7 @@ export function Payments() {
             label: data.category === 'admission_form' ? 'Print Form & Receipt' : 'Print Receipt',
             onClick: () => {
               handleDownloadReceipt({ ...payload, id: docRef.id }, balance);
-              if (data.category === 'admission_form') generateBlankAdmissionFormPDF();
+              if (data.category === 'admission_form') generateBlankAdmissionFormPDF(settings.logoUrl);
             }
           } : undefined
         });
@@ -206,7 +208,8 @@ export function Payments() {
         date: paymentDate,
         method: payment.method,
         notes: payment.notes,
-        recordedBy: user?.displayName || (isAdmin ? 'Administrator' : 'Staff')
+        recordedBy: user?.displayName || (isAdmin ? 'Administrator' : 'Staff'),
+        logoUrl: settings.logoUrl
       });
       toast.success('Receipt generated successfully', { id: toastId });
     } catch (error) {
@@ -347,7 +350,7 @@ export function Payments() {
                              </button>
                              {payment.category === 'admission_form' && (
                                <button 
-                                 onClick={() => generateBlankAdmissionFormPDF()} 
+                                 onClick={() => generateBlankAdmissionFormPDF(settings.logoUrl)} 
                                  className="px-3 py-1.5 flex items-center gap-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-blue-500/20"
                                  title="Print Blank Form"
                                >

@@ -92,5 +92,10 @@ service cloud.firestore {
       allow update: if isVerified() && isAdmin() && isValidSalary(request.resource.data);
       allow delete: if isVerified() && isAdmin();
     }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isVerified() && isAdmin();
+    }
   }
 }
