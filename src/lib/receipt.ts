@@ -1,7 +1,7 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
-import { DEFAULT_LOGO } from './constants';
+import { DEFAULT_LOGO, DOCUMENT_LOGO } from './constants';
 
 interface ReceiptData {
   receiptNo: string;
@@ -102,7 +102,7 @@ const getProcessedLogoDataUrl = async (url: string): Promise<string> => {
 
 const getHeaderHtml = (logoUrl: string) => `
   <div style="text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #0A0F1C;">
-    <img src="${logoUrl}" style="height: 200px; width: auto; max-width: 90%; object-fit: contain; margin: 0 auto 8px auto; display: block;" />
+    <img src="${logoUrl}" style="height: 180px; width: auto; max-width: 95%; object-fit: contain; margin: 12px auto 2px auto; display: block;" />
     <div style="font-size: 11px; color: #1a1a1a; line-height: 1.4; letter-spacing: 0.1px;">
       <p style="margin: 0; font-weight: 800; font-size: 13px; color: #000; text-transform: uppercase;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
       <p style="margin: 2px 0; font-weight: 600;">Email: charthessfashions@gmail.com</p>
@@ -122,12 +122,12 @@ export const generateReceiptPDF = async (data: ReceiptData) => {
   receiptContainer.style.color = '#000000';
   receiptContainer.style.fontFamily = "'Inter', sans-serif";
   
-  const logoPath = data.logoUrl || DEFAULT_LOGO;
+  const logoPath = DOCUMENT_LOGO;
   const processedLogoUrl = await getProcessedLogoDataUrl(logoPath);
 
   const headerHtml = `
   <div style="text-align: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #0A0F1C;">
-    <img src="${processedLogoUrl}" style="height: 180px; width: auto; max-width: 90%; object-fit: contain; margin: 0 auto 8px auto; display: block;" />
+    <img src="${processedLogoUrl}" style="height: 160px; width: auto; max-width: 95%; object-fit: contain; margin: 12px auto 2px auto; display: block;" />
     <div style="font-size: 10px; color: #1a1a1a; line-height: 1.3; letter-spacing: 0.1px;">
       <p style="margin: 0; font-weight: 800; font-size: 12px; color: #000; text-transform: uppercase;">Tel: +233 24 786 4347 / +233 50 083 0085</p>
       <p style="margin: 2px 0; font-weight: 600;">Email: charthessfashions@gmail.com</p>
@@ -259,7 +259,7 @@ export const generateInvoicePDF = async (student: any, customLogoUrl?: string) =
   container.style.color = '#000000';
   container.style.fontFamily = "'Inter', sans-serif";
   
-  const logoPath = customLogoUrl || DEFAULT_LOGO;
+  const logoPath = DOCUMENT_LOGO;
   const logoUrl = await getProcessedLogoDataUrl(logoPath);
 
   const headerHtml = getHeaderHtml(logoUrl);
@@ -369,7 +369,7 @@ export interface EnrollmentData {
 }
 
 export const generateEnrollmentPDF = async (data: EnrollmentData) => {
-  const logoPath = data.schoolInfo?.logoUrl || DEFAULT_LOGO;
+  const logoPath = DOCUMENT_LOGO;
   const logoUrl = await getProcessedLogoDataUrl(logoPath);
   const student = data.student;
 
@@ -494,7 +494,7 @@ export const generateEnrollmentPDF = async (data: EnrollmentData) => {
 };
 
 export const generateBlankAdmissionFormPDF = async (customLogoUrl?: string) => {
-  const logoPath = customLogoUrl || DEFAULT_LOGO;
+  const logoPath = DOCUMENT_LOGO;
   const logoUrl = await getProcessedLogoDataUrl(logoPath);
   
   const pdf = new jsPDF('p', 'mm', 'a4');

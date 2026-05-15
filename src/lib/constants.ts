@@ -6,3 +6,4 @@ export const ADMIN_EMAILS = [
 
 export const DEFAULT_LOGO = '/Charthes_new_logo_3.png';
 export const NEW_LOGO_PATH = '/Charthes_new_logo_3.png';
+export const DOCUMENT_LOGO = '/charhess_new_docs.jpg';
